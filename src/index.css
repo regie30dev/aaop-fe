@@ -1,0 +1,85 @@
+:root {
+  /* Brand — blue dominant */
+  --color-primary: #2563eb;
+  --color-primary-strong: #1d4ed8;
+  --color-primary-soft: #e8f0fe;
+
+  /* Secondary accent — red */
+  --color-accent-red: #dc2626;
+  --color-accent-red-soft: #fdeaea;
+
+  /* Surfaces — white */
+  --color-bg: #f3f6fc;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f7f9fe;
+  --color-border: #e6ecf5;
+
+  /* Text */
+  --color-text: #14203b;
+  --color-text-muted: #6b7a99;
+  --color-text-faint: #a9b4c9;
+
+  /* Semantic — positive trends in blue, alerts in red */
+  --color-success: #2563eb;
+  --color-success-soft: #e8f0fe;
+  --color-warning: #dc2626;
+
+  /* Status / department palette — kept within blue / red / neutral */
+  --tag-design-bg: #e8f0fe;
+  --tag-design-fg: #2563eb;
+  --tag-marketing-bg: #fdeaea;
+  --tag-marketing-fg: #dc2626;
+  --tag-development-bg: #e3e9f7;
+  --tag-development-fg: #1e40af;
+  --tag-neutral-bg: #eef2f9;
+  --tag-neutral-fg: #475f8a;
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(31, 33, 56, 0.04);
+  --shadow-md: 0 6px 24px rgba(31, 33, 56, 0.06);
+
+  --sidebar-width: 248px;
+
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

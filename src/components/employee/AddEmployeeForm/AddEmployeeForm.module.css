@@ -1,0 +1,166 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(20, 24, 33, 0.55);
+  overflow-y: auto;
+  animation: formFadeIn 0.42s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.backdropClosing {
+  animation: formFadeOut 0.32s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.card {
+  width: 460px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 30px 30px 34px;
+  transform-origin: top center;
+  will-change: transform, opacity;
+  animation: formPop 0.44s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.cardClosing {
+  animation: formPopOut 0.32s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.title {
+  margin: 0 0 22px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #14203b;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2b2f36;
+}
+
+.req {
+  margin-left: 2px;
+  color: #e5484d;
+}
+
+.input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #c7ccd4;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #2b2f36;
+  background: #fff;
+}
+
+.input::placeholder {
+  color: #93a08f;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #3ca94b;
+  box-shadow: 0 0 0 3px rgba(60, 169, 75, 0.15);
+}
+
+.file {
+  font-size: 14px;
+  color: #2b2f36;
+}
+
+.actions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+
+.cancel,
+.submit {
+  min-width: 130px;
+  padding: 11px 20px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.submit {
+  background: var(--color-primary);
+}
+
+.submit:hover {
+  background: var(--color-primary-strong);
+}
+
+.cancel {
+  background: #e5484d;
+}
+
+.cancel:hover {
+  background: #cf3b40;
+}
+
+@keyframes formFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes formFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes formPop {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes formPopOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .backdropClosing,
+  .card,
+  .cardClosing {
+    animation-duration: 0.01ms;
+  }
+}
