@@ -1,0 +1,210 @@
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import type { FormEvent, ReactNode } from "react";
+import { useAnimatedClose } from "../../../hooks/useAnimatedClose";
+import styles from "./FormModal.module.css";
+
+// Keep in sync with the exit animation duration in FormModal.module.css.
+const EXIT_DURATION_MS = 320;
+
+export type FieldType = "text" | "email" | "date" | "file";
+
+export interface ModalField {
+  name: string;
+  label: string;
+  type?: FieldType;
+  required?: boolean;
+  placeholder?: string;
+}
+
+/** A read-only, system-generated field shown first (e.g. Employee No / Office No). */
+export interface GeneratedField {
+  name: string;
+  label: string;
+  value: string;
+}
+
+interface FormModalProps {
+  title: string;
+  generated?: GeneratedField;
+  fields: ModalField[];
+  initial?: Record<string, string>;
+  submitLabel: string;
+  pendingLabel?: string;
+  onClose: () => void;
+  onSubmit: (values: Record<string, string>) => void | Promise<void>;
+}
+
+function Label({
+  htmlFor,
+  children,
+  required,
+}: {
+  htmlFor: string;
+  children: ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <label className={styles.label} htmlFor={htmlFor}>
+      {children}
+      {required && <span className={styles.req}>*</span>}
+    </label>
+  );
+}
+
+/**
+ * Generic, reusable form modal driven by a field config. Owns all the modal
+ * chrome (portal, animated open/close, focus trap, scroll lock, spinner,
+ * inline errors); callers supply the fields and an async `onSubmit`.
+ */
+export function FormModal({
+  title,
+  generated,
+  fields,
+  initial,
+  submitLabel,
+  pendingLabel = "Saving…",
+  onClose,
+  onSubmit,
+}: FormModalProps) {
+  const { closing, close: handleClose } = useAnimatedClose(
+    onClose,
+    EXIT_DURATION_MS,
+    { captureEsc: true },
+  );
+
+  const formRef = useRef<HTMLFormElement>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Lock background scroll and focus the first editable field.
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const firstField =
+      formRef.current?.querySelector<HTMLElement>("input:not([disabled])");
+    firstField?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  // Keep Tab focus inside the dialog.
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key !== "Tab" || !formRef.current) return;
+    const focusable = Array.from(
+      formRef.current.querySelectorAll<HTMLElement>(
+        'input, button, select, textarea, [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((el) => !el.hasAttribute("disabled"));
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submitting) return;
+    const data = new FormData(event.currentTarget);
+    const values: Record<string, string> = {};
+    if (generated) values[generated.name] = generated.value;
+    for (const field of fields) {
+      if (field.type === "file") continue; // files are not collected/persisted
+      values[field.name] = String(data.get(field.name) ?? "");
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      await onSubmit(values);
+      handleClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setSubmitting(false);
+    }
+  };
+
+  const titleId = "form-modal-title";
+
+  return createPortal(
+    <div className={`${styles.backdrop} ${closing ? styles.backdropClosing : ""}`}>
+      <form
+        ref={formRef}
+        className={`${styles.card} ${closing ? styles.cardClosing : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onSubmit={handleSubmit}
+        onKeyDown={handleKeyDown}
+      >
+        <h2 id={titleId} className={styles.title}>
+          {title}
+        </h2>
+
+        {generated && (
+          <div className={styles.field}>
+            <Label htmlFor={generated.name}>{generated.label}</Label>
+            <input
+              id={generated.name}
+              name={generated.name}
+              className={styles.input}
+              type="text"
+              value={generated.value}
+              disabled
+            />
+          </div>
+        )}
+
+        {fields.map((field) => (
+          <div className={styles.field} key={field.name}>
+            <Label htmlFor={field.name} required={field.required}>
+              {field.label}
+            </Label>
+            {field.type === "file" ? (
+              <input
+                id={field.name}
+                name={field.name}
+                className={styles.file}
+                type="file"
+                accept="image/*"
+              />
+            ) : (
+              <input
+                id={field.name}
+                name={field.name}
+                className={styles.input}
+                type={field.type ?? "text"}
+                placeholder={field.placeholder}
+                defaultValue={initial?.[field.name] ?? ""}
+              />
+            )}
+          </div>
+        ))}
+
+        {error && <p className={styles.error}>{error}</p>}
+
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.cancel}
+            onClick={handleClose}
+            disabled={submitting}
+          >
+            Cancel
+          </button>
+          <button type="submit" className={styles.submit} disabled={submitting}>
+            {submitting && <span className={styles.spinner} aria-hidden="true" />}
+            {submitting ? pendingLabel : submitLabel}
+          </button>
+        </div>
+      </form>
+    </div>,
+    document.body,
+  );
+}

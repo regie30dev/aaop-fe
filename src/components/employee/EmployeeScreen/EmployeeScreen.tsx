@@ -25,9 +25,21 @@ import {
   updateEmployee,
 } from "../../../services/employees";
 import type { EmployeeFormValues } from "../../../services/employees";
-import { AddEmployeeForm } from "../AddEmployeeForm/AddEmployeeForm";
+import { FormModal } from "../../common/FormModal/FormModal";
+import type { ModalField } from "../../common/FormModal/FormModal";
 import { ConfirmDialog } from "../../common/ConfirmDialog/ConfirmDialog";
 import styles from "./EmployeeScreen.module.css";
+
+const EMPLOYEE_FIELDS: ModalField[] = [
+  { name: "lastName", label: "Last Name", required: true, placeholder: "Enter Last Name" },
+  { name: "firstName", label: "First Name", required: true, placeholder: "Enter First Name" },
+  { name: "middleName", label: "Middle Name", required: true, placeholder: "Enter Middle Name" },
+  { name: "dateOfBirth", label: "Date of Birth", type: "date", required: true },
+  { name: "position", label: "Position", required: true, placeholder: "Enter Position" },
+  { name: "office", label: "Office", required: true, placeholder: "Enter Office" },
+  { name: "email", label: "Email", type: "email", placeholder: "Enter Email" },
+  { name: "picture", label: "Upload Picture", type: "file" },
+];
 
 const columns = ["Employee No.", "Name", "Email", "Office", "Position", "Status"];
 
@@ -109,11 +121,21 @@ export function EmployeeScreen() {
   };
 
   // Create or update, then refresh so rows + next number stay current.
-  const handleSubmit = async (employee: NewEmployee) => {
+  const handleSubmit = async (values: Record<string, string>) => {
+    const payload: NewEmployee = {
+      employeeNo: values.employeeNo,
+      lastName: values.lastName,
+      firstName: values.firstName,
+      middleName: values.middleName,
+      dateOfBirth: values.dateOfBirth,
+      position: values.position,
+      office: values.office,
+      email: values.email || undefined,
+    };
     if (form?.mode === "edit") {
-      await updateEmployee(form.id, employee);
+      await updateEmployee(form.id, payload);
     } else {
-      await createEmployee(employee);
+      await createEmployee(payload);
     }
     await load();
   };
@@ -254,15 +276,24 @@ export function EmployeeScreen() {
       </div>
 
       {form && (
-        <AddEmployeeForm
+        <FormModal
           key={form.mode === "edit" ? form.id : "add"}
-          mode={form.mode}
-          employeeNo={
+          title={form.mode === "edit" ? "Edit Employee" : "Add New Employee"}
+          generated={{
+            name: "employeeNo",
+            label: "Employee No.",
+            value:
+              form.mode === "edit"
+                ? form.values.employeeNo
+                : getNextEmployeeNo(employees),
+          }}
+          fields={EMPLOYEE_FIELDS}
+          initial={
             form.mode === "edit"
-              ? form.values.employeeNo
-              : getNextEmployeeNo(employees)
+              ? (form.values as unknown as Record<string, string>)
+              : undefined
           }
-          initial={form.mode === "edit" ? form.values : undefined}
+          submitLabel={form.mode === "edit" ? "Update" : "Save"}
           onClose={() => setForm(null)}
           onSubmit={handleSubmit}
         />

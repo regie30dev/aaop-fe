@@ -7,13 +7,14 @@ import {
   Wrench,
 } from "lucide-react";
 import { EmployeeScreen } from "../components/employee/EmployeeScreen/EmployeeScreen";
+import { OfficeScreen } from "../components/office/OfficeScreen/OfficeScreen";
 
 export type ScreenId =
   | "dashboard"
   | "accountability"
   | "property"
   | "employee"
-  | "department";
+  | "office";
 
 export interface ScreenConfig {
   id: ScreenId;
@@ -44,7 +45,12 @@ export const SCREENS: Record<ScreenId, ScreenConfig> = {
     icon: UserRound,
     overlay: EmployeeScreen,
   },
-  department: { id: "department", label: "Office", icon: Building2 },
+  office: {
+    id: "office",
+    label: "Office",
+    icon: Building2,
+    overlay: OfficeScreen,
+  },
 };
 
 /** Display order in the sidebar. */
@@ -53,5 +59,5 @@ export const SCREEN_ORDER: ScreenId[] = [
   "accountability",
   "property",
   "employee",
-  "department",
+  "office",
 ];

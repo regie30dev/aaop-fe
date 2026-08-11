@@ -106,12 +106,6 @@
   margin-top: 22px;
 }
 
-.cancel:disabled,
-.submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .cancel,
 .submit {
   min-width: 130px;
@@ -122,11 +116,30 @@
   color: #fff;
 }
 
+.cancel:disabled,
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .submit {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  background: var(--color-primary);
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--color-primary-strong);
+}
+
+.cancel {
+  background: #e5484d;
+}
+
+.cancel:hover:not(:disabled) {
+  background: #cf3b40;
 }
 
 .spinner {
@@ -142,28 +155,6 @@
   to {
     transform: rotate(360deg);
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .spinner {
-    animation-duration: 1.6s;
-  }
-}
-
-.submit {
-  background: var(--color-primary);
-}
-
-.submit:hover {
-  background: var(--color-primary-strong);
-}
-
-.cancel {
-  background: #e5484d;
-}
-
-.cancel:hover {
-  background: #cf3b40;
 }
 
 @keyframes formFadeIn {
@@ -210,7 +201,8 @@
   .backdrop,
   .backdropClosing,
   .card,
-  .cardClosing {
+  .cardClosing,
+  .spinner {
     animation-duration: 0.01ms;
   }
 }

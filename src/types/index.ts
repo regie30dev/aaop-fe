@@ -59,6 +59,25 @@ export interface DirectoryEmployee {
   avatar: string;
 }
 
+/* Office directory screen + Add New Office form */
+export type OfficeStatus = "Active" | "Inactive";
+
+export interface DirectoryOffice {
+  id: string;
+  officeNo: string;
+  officeName: string;
+  function: string;
+  location: string;
+  status: OfficeStatus;
+}
+
+export interface NewOffice {
+  officeNo: string;
+  officeName: string;
+  function?: string;
+  location?: string;
+}
+
 /* Payload emitted by the Add New Employee form (FE_UI_3) */
 export interface NewEmployee {
   employeeNo: string;

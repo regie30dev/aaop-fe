@@ -1,4 +1,5 @@
 import { api } from "../api/client";
+import { nextSequentialNo } from "./sequence";
 import type { DirectoryEmployee, MailStatus, NewEmployee } from "../types";
 
 /**
@@ -79,27 +80,16 @@ export async function getEmployeeCount(): Promise<number> {
   return res.pagination?.total ?? res.items.length;
 }
 
-const DEFAULT_EMPLOYEE_NO = "EMP-001";
-
 /**
  * Next employee number, derived from the highest numeric value among the rows
- * currently STORED in the DB — not from any mock/count. The prefix and
- * zero-padding width of that highest row are preserved (e.g. last "EMP-001" ->
- * "EMP-002", last "EMP-1008" -> "EMP-1009"). Falls back to EMP-001 when empty.
+ * currently STORED in the DB — not from any mock/count. Prefix + zero-padding
+ * width are preserved (e.g. last "EMP-001" -> "EMP-002"). See nextSequentialNo.
  */
 export function getNextEmployeeNo(existing: DirectoryEmployee[]): string {
-  let best: { prefix: string; width: number; value: number } | null = null;
-  for (const e of existing) {
-    const match = e.employeeNo.match(/^(.*?)(\d+)\s*$/);
-    if (!match) continue;
-    const value = Number.parseInt(match[2], 10);
-    if (!best || value > best.value) {
-      best = { prefix: match[1], width: match[2].length, value };
-    }
-  }
-  if (!best) return DEFAULT_EMPLOYEE_NO;
-  const next = String(best.value + 1).padStart(best.width, "0");
-  return `${best.prefix}${next}`;
+  return nextSequentialNo(
+    existing.map((e) => e.employeeNo),
+    "EMP-001",
+  );
 }
 
 /** Editable fields used to pre-fill the form when editing an employee. */
