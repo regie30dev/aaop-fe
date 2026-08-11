@@ -1,5 +1,7 @@
 import { api } from "../api/client";
+import type { ItemEnvelope, ListEnvelope } from "../api/client";
 import { nextSequentialNo } from "./sequence";
+import { emitEmployeesChanged } from "./employeeEvents";
 import type { DirectoryEmployee, MailStatus, NewEmployee } from "../types";
 
 /**
@@ -16,16 +18,11 @@ interface ApiEmployee {
   middleName?: string | null;
   lastName: string;
   position?: string | null;
-  office?: string | null;
+  officeNo?: string | null;
+  office?: { officeNo: string; officeName: string } | null;
   dateOfBirth?: string | null;
   email?: string | null;
   isActive: boolean;
-}
-
-interface ListResponse {
-  status: string;
-  items: ApiEmployee[];
-  pagination?: { total: number };
 }
 
 // Deterministic dot color for the Office column (BE has no color field).
@@ -52,7 +49,7 @@ function fullName(e: ApiEmployee): string {
 
 /** Map a backend Employee onto the directory table's view-model. */
 function toDirectoryEmployee(e: ApiEmployee): DirectoryEmployee {
-  const office = e.office ?? "—";
+  const officeName = e.office?.officeName ?? "—";
   const mailStatus: MailStatus = e.email ? "verified" : "warning";
   return {
     id: e.id,
@@ -60,8 +57,8 @@ function toDirectoryEmployee(e: ApiEmployee): DirectoryEmployee {
     name: fullName(e),
     email: e.email ?? "—",
     mailStatus,
-    department: office,
-    departmentColor: officeColor(office),
+    department: officeName,
+    departmentColor: officeColor(officeName),
     role: e.position ?? "—",
     status: e.isActive ? "Active" : "Inactive",
     avatar: `https://i.pravatar.cc/64?u=${encodeURIComponent(e.employeeNo)}`,
@@ -70,13 +67,13 @@ function toDirectoryEmployee(e: ApiEmployee): DirectoryEmployee {
 
 export async function getDirectoryEmployees(): Promise<DirectoryEmployee[]> {
   // pageSize=100 keeps the whole directory available for display + numbering.
-  const res = await api.get<ListResponse>("/employees?pageSize=100");
+  const res = await api.get<ListEnvelope<ApiEmployee>>("/employees?pageSize=100");
   return res.items.map(toDirectoryEmployee);
 }
 
 /** Total number of employees stored in the DB (from the list pagination meta). */
 export async function getEmployeeCount(): Promise<number> {
-  const res = await api.get<ListResponse>("/employees?pageSize=1");
+  const res = await api.get<ListEnvelope<ApiEmployee>>("/employees?pageSize=1");
   return res.pagination?.total ?? res.items.length;
 }
 
@@ -88,7 +85,7 @@ export async function getEmployeeCount(): Promise<number> {
 export function getNextEmployeeNo(existing: DirectoryEmployee[]): string {
   return nextSequentialNo(
     existing.map((e) => e.employeeNo),
-    "EMP-001",
+    { prefix: "EMP-", width: 5 },
   );
 }
 
@@ -100,13 +97,8 @@ export interface EmployeeFormValues {
   lastName: string;
   dateOfBirth: string;
   position: string;
-  office: string;
+  officeNo: string;
   email: string;
-}
-
-interface SingleResponse {
-  status: string;
-  data: ApiEmployee;
 }
 
 // Build the mutable field payload, sending optionals only when present
@@ -118,7 +110,7 @@ function toMutablePayload(input: NewEmployee): Record<string, unknown> {
   };
   if (input.middleName) payload.middleName = input.middleName;
   if (input.position) payload.position = input.position;
-  if (input.office) payload.office = input.office;
+  if (input.officeNo) payload.officeNo = input.officeNo;
   if (input.dateOfBirth) payload.dateOfBirth = input.dateOfBirth;
   if (input.email) payload.email = input.email;
   return payload;
@@ -130,11 +122,12 @@ export async function createEmployee(input: NewEmployee): Promise<void> {
     employeeNo: input.employeeNo,
     ...toMutablePayload(input),
   });
+  emitEmployeesChanged();
 }
 
 /** Fetch a single employee's editable fields for the edit form. */
 export async function getEmployee(id: string): Promise<EmployeeFormValues> {
-  const res = await api.get<SingleResponse>(`/employees/${id}`);
+  const res = await api.get<ItemEnvelope<ApiEmployee>>(`/employees/${id}`);
   const e = res.data;
   return {
     employeeNo: e.employeeNo,
@@ -143,7 +136,7 @@ export async function getEmployee(id: string): Promise<EmployeeFormValues> {
     lastName: e.lastName ?? "",
     dateOfBirth: e.dateOfBirth ? e.dateOfBirth.slice(0, 10) : "",
     position: e.position ?? "",
-    office: e.office ?? "",
+    officeNo: e.officeNo ?? "",
     email: e.email ?? "",
   };
 }
@@ -154,9 +147,11 @@ export async function updateEmployee(
   input: NewEmployee,
 ): Promise<void> {
   await api.patch(`/employees/${id}`, toMutablePayload(input));
+  emitEmployeesChanged();
 }
 
 /** Delete an employee via DELETE /employees/:id. */
 export async function deleteEmployee(id: string): Promise<void> {
   await api.del(`/employees/${id}`);
+  emitEmployeesChanged();
 }

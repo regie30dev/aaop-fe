@@ -13,22 +13,20 @@ interface ScreenOverlayProps {
 }
 
 export function ScreenOverlay({ title, onClose, children }: ScreenOverlayProps) {
+  // Dismiss only via the explicit X (no outside-click, no Escape).
   const { closing, close: handleClose } = useAnimatedClose(
     onClose,
     EXIT_DURATION_MS,
+    { closeOnEscape: false },
   );
 
   return (
-    <div
-      className={`${styles.backdrop} ${closing ? styles.backdropClosing : ""}`}
-      onClick={handleClose}
-    >
+    <div className={`${styles.backdrop} ${closing ? styles.backdropClosing : ""}`}>
       <div
         className={`${styles.panel} ${closing ? styles.panelClosing : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        onClick={(event) => event.stopPropagation()}
       >
         <button
           type="button"

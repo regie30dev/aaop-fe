@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { EmployeeScreen } from "../components/employee/EmployeeScreen/EmployeeScreen";
 import { OfficeScreen } from "../components/office/OfficeScreen/OfficeScreen";
+import { PropertyScreen } from "../components/property/PropertyScreen/PropertyScreen";
 
 export type ScreenId =
   | "dashboard"
@@ -38,7 +39,12 @@ export const SCREENS: Record<ScreenId, ScreenConfig> = {
     label: "Accountability",
     icon: Wrench,
   },
-  property: { id: "property", label: "Property", icon: Home },
+  property: {
+    id: "property",
+    label: "Property",
+    icon: Home,
+    overlay: PropertyScreen,
+  },
   employee: {
     id: "employee",
     label: "Employee",

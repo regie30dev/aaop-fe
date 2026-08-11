@@ -78,6 +78,30 @@ export interface NewOffice {
   location?: string;
 }
 
+/* Property directory screen + Add New Property form */
+export interface DirectoryProperty {
+  id: string;
+  propertyNo: string;
+  category: string;
+  propertyName: string;
+  description: string;
+  /** Acquisition cost, pre-formatted for display (e.g. "1,500.00"). */
+  price: string;
+  /** Acquisition date, pre-formatted for display, or "—" when unset. */
+  dateAcquired: string;
+  condition: string;
+}
+
+export interface NewProperty {
+  propertyNo: string;
+  category?: string;
+  propertyName?: string;
+  description: string;
+  acquisitionCost: number;
+  acquisitionDate?: string;
+  condition?: string;
+}
+
 /* Payload emitted by the Add New Employee form (FE_UI_3) */
 export interface NewEmployee {
   employeeNo: string;
@@ -86,7 +110,7 @@ export interface NewEmployee {
   middleName: string;
   dateOfBirth: string;
   position: string;
-  office: string;
+  officeNo: string;
   email?: string;
   picture?: File | null;
 }

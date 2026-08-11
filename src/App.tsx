@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { connectRealtime } from "./services/realtime";
 import { Sidebar } from "./components/layout/Sidebar/Sidebar";
 import { ScreenOverlay } from "./components/overlay/ScreenOverlay/ScreenOverlay";
 import { Dashboard } from "./pages/Dashboard/Dashboard";
@@ -9,6 +10,9 @@ import styles from "./App.module.css";
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeScreen, setActiveScreen] = useState<ScreenId>(HOME_SCREEN);
+
+  // Open the realtime (SSE) connection for the app's lifetime.
+  useEffect(() => connectRealtime(), []);
 
   const handleSelect = (id: ScreenId) => {
     setActiveScreen(id);

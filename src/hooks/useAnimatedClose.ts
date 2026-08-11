@@ -4,6 +4,9 @@ interface Options {
   /** Listen for Escape in the capture phase and stopImmediatePropagation,
    *  so a nested modal closes only itself (not a modal behind it). */
   captureEsc?: boolean;
+  /** Whether pressing Escape closes the surface. Default true. Set false when
+   *  the surface must only be dismissed by an explicit control (e.g. an X). */
+  closeOnEscape?: boolean;
 }
 
 /**
@@ -27,6 +30,7 @@ export function useAnimatedClose(
   };
 
   useEffect(() => {
+    if (opts?.closeOnEscape === false) return;
     const capture = opts?.captureEsc ?? false;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;

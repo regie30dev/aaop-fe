@@ -20,3 +20,14 @@ Then, include Status and Actions (columns).  So, these are the  titles (labels):
 	 - Location of the Office -> location
 
 You can refactor the code for software reusability - to have a template generic modal to be used based on the selected options on the menu.
+
+4. Create: For the Property Modal - following like the Employee and Office modal and besides a reusable component is now available. Just change the labelling to reflect it as the Property option - so Add New Property.
+Then, the Actions (column).  So, these are the  titles (labels): (corresponding is the actual fields in the BE)
+
+    - Property No -> propertyNo
+		- Category -> category
+		- Property Name -> propertyName
+		- Description -> description
+		- Price -> acquisitionCost
+		- Date Acquired -> acquisitionDate
+		- Condition -> condition 

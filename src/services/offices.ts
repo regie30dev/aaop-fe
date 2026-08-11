@@ -1,5 +1,7 @@
 import { api } from "../api/client";
+import type { ItemEnvelope, ListEnvelope } from "../api/client";
 import { nextSequentialNo } from "./sequence";
+import { emitOfficesChanged } from "./officeEvents";
 import type { DirectoryOffice, NewOffice } from "../types";
 
 /**
@@ -17,16 +19,6 @@ interface ApiOffice {
   isActive: boolean;
 }
 
-interface ListResponse {
-  status: string;
-  items: ApiOffice[];
-  pagination?: { total: number };
-}
-
-interface SingleResponse {
-  status: string;
-  data: ApiOffice;
-}
 
 /** Editable fields used to pre-fill the form when editing an office. */
 export interface OfficeFormValues {
@@ -55,8 +47,14 @@ function toMutablePayload(input: NewOffice): Record<string, unknown> {
 }
 
 export async function getOffices(): Promise<DirectoryOffice[]> {
-  const res = await api.get<ListResponse>("/offices?pageSize=100");
+  const res = await api.get<ListEnvelope<ApiOffice>>("/offices?pageSize=100");
   return res.items.map(toDirectoryOffice);
+}
+
+/** Total number of offices stored in the DB (from the list pagination meta). */
+export async function getOfficeCount(): Promise<number> {
+  const res = await api.get<ListEnvelope<ApiOffice>>("/offices?pageSize=1");
+  return res.pagination?.total ?? res.items.length;
 }
 
 /** Next office number, derived from the highest stored one (e.g. OFC-00002).
@@ -65,12 +63,12 @@ export async function getOffices(): Promise<DirectoryOffice[]> {
 export function getNextOfficeNo(existing: DirectoryOffice[]): string {
   return nextSequentialNo(
     existing.map((o) => o.officeNo),
-    "OFC-00001",
+    { prefix: "OFC-", width: 5 },
   );
 }
 
 export async function getOffice(id: string): Promise<OfficeFormValues> {
-  const res = await api.get<SingleResponse>(`/offices/${id}`);
+  const res = await api.get<ItemEnvelope<ApiOffice>>(`/offices/${id}`);
   const o = res.data;
   return {
     officeNo: o.officeNo,
@@ -85,12 +83,15 @@ export async function createOffice(input: NewOffice): Promise<void> {
     officeNo: input.officeNo,
     ...toMutablePayload(input),
   });
+  emitOfficesChanged();
 }
 
 export async function updateOffice(id: string, input: NewOffice): Promise<void> {
   await api.patch(`/offices/${id}`, toMutablePayload(input));
+  emitOfficesChanged();
 }
 
 export async function deleteOffice(id: string): Promise<void> {
   await api.del(`/offices/${id}`);
+  emitOfficesChanged();
 }

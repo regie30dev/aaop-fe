@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import { useAnimatedClose } from "../../../hooks/useAnimatedClose";
+import { getErrorMessage } from "../../../utils/errors";
+import { Spinner } from "../Spinner/Spinner";
 import styles from "./ConfirmDialog.module.css";
 
 // Keep in sync with the exit animation duration in ConfirmDialog.module.css.
@@ -49,7 +51,7 @@ export function ConfirmDialog({
       await onConfirm();
       close();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(getErrorMessage(err, "Something went wrong."));
       setPending(false);
     }
   };
@@ -91,7 +93,7 @@ export function ConfirmDialog({
             onClick={handleConfirm}
             disabled={pending}
           >
-            {pending && <span className={styles.spinner} aria-hidden="true" />}
+            {pending && <Spinner />}
             {pending ? pendingLabel : confirmLabel}
           </button>
         </div>

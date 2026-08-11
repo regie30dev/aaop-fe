@@ -25,21 +25,35 @@ import {
   updateEmployee,
 } from "../../../services/employees";
 import type { EmployeeFormValues } from "../../../services/employees";
+import { getOffices } from "../../../services/offices";
 import { FormModal } from "../../common/FormModal/FormModal";
 import type { ModalField } from "../../common/FormModal/FormModal";
 import { ConfirmDialog } from "../../common/ConfirmDialog/ConfirmDialog";
+import { getErrorMessage } from "../../../utils/errors";
 import styles from "./EmployeeScreen.module.css";
 
-const EMPLOYEE_FIELDS: ModalField[] = [
-  { name: "lastName", label: "Last Name", required: true, placeholder: "Enter Last Name" },
-  { name: "firstName", label: "First Name", required: true, placeholder: "Enter First Name" },
-  { name: "middleName", label: "Middle Name", required: true, placeholder: "Enter Middle Name" },
-  { name: "dateOfBirth", label: "Date of Birth", type: "date", required: true },
-  { name: "position", label: "Position", required: true, placeholder: "Enter Position" },
-  { name: "office", label: "Office", required: true, placeholder: "Enter Office" },
-  { name: "email", label: "Email", type: "email", placeholder: "Enter Email" },
-  { name: "picture", label: "Upload Picture", type: "file" },
-];
+// Office is a dropdown fed from the Office table (options injected at render).
+function employeeFields(
+  officeOptions: { value: string; label: string }[],
+): ModalField[] {
+  return [
+    { name: "lastName", label: "Last Name", required: true, placeholder: "Enter Last Name" },
+    { name: "firstName", label: "First Name", required: true, placeholder: "Enter First Name" },
+    { name: "middleName", label: "Middle Name", required: true, placeholder: "Enter Middle Name" },
+    { name: "dateOfBirth", label: "Date of Birth", type: "date", required: true },
+    { name: "position", label: "Position", required: true, placeholder: "Enter Position" },
+    {
+      name: "officeNo",
+      label: "Office",
+      type: "select",
+      required: true,
+      placeholder: "Select Office",
+      options: officeOptions,
+    },
+    { name: "email", label: "Email", type: "email", placeholder: "Enter Email" },
+    { name: "picture", label: "Upload Picture", type: "file" },
+  ];
+}
 
 const columns = ["Employee No.", "Name", "Email", "Office", "Position", "Status"];
 
@@ -67,6 +81,9 @@ function MailIcon({ status }: { status: MailStatus }) {
 
 export function EmployeeScreen() {
   const [employees, setEmployees] = useState<DirectoryEmployee[]>([]);
+  const [officeOptions, setOfficeOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,9 +104,19 @@ export function EmployeeScreen() {
     setLoading(true);
     setError(null);
     try {
-      setEmployees(await getDirectoryEmployees());
+      const [emps, offices] = await Promise.all([
+        getDirectoryEmployees(),
+        getOffices(),
+      ]);
+      setEmployees(emps);
+      setOfficeOptions(
+        offices.map((o) => ({
+          value: o.officeNo,
+          label: o.officeName,
+        })),
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load employees.");
+      setError(getErrorMessage(err, "Failed to load employees."));
     } finally {
       setLoading(false);
     }
@@ -105,9 +132,7 @@ export function EmployeeScreen() {
       const values = await getEmployee(row.id);
       setForm({ mode: "edit", id: row.id, values });
     } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Failed to open the employee.",
-      );
+      setActionError(getErrorMessage(err, "Failed to open the employee."));
     }
   };
 
@@ -129,7 +154,7 @@ export function EmployeeScreen() {
       middleName: values.middleName,
       dateOfBirth: values.dateOfBirth,
       position: values.position,
-      office: values.office,
+      officeNo: values.officeNo,
       email: values.email || undefined,
     };
     if (form?.mode === "edit") {
@@ -287,7 +312,7 @@ export function EmployeeScreen() {
                 ? form.values.employeeNo
                 : getNextEmployeeNo(employees),
           }}
-          fields={EMPLOYEE_FIELDS}
+          fields={employeeFields(officeOptions)}
           initial={
             form.mode === "edit"
               ? (form.values as unknown as Record<string, string>)

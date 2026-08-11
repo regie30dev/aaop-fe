@@ -1,13 +1,22 @@
+import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { FormEvent, ReactNode } from "react";
 import { useAnimatedClose } from "../../../hooks/useAnimatedClose";
+import { getErrorMessage } from "../../../utils/errors";
+import { Spinner } from "../Spinner/Spinner";
 import styles from "./FormModal.module.css";
 
 // Keep in sync with the exit animation duration in FormModal.module.css.
 const EXIT_DURATION_MS = 320;
 
-export type FieldType = "text" | "email" | "date" | "file";
+export type FieldType =
+  | "text"
+  | "email"
+  | "number"
+  | "date"
+  | "file"
+  | "select";
 
 export interface ModalField {
   name: string;
@@ -15,6 +24,8 @@ export interface ModalField {
   type?: FieldType;
   required?: boolean;
   placeholder?: string;
+  /** Options for a `select` field. */
+  options?: { value: string; label: string }[];
 }
 
 /** A read-only, system-generated field shown first (e.g. Employee No / Office No). */
@@ -67,10 +78,11 @@ export function FormModal({
   onClose,
   onSubmit,
 }: FormModalProps) {
+  // Dismiss only via the explicit X (no outside-click, no Escape).
   const { closing, close: handleClose } = useAnimatedClose(
     onClose,
     EXIT_DURATION_MS,
-    { captureEsc: true },
+    { captureEsc: true, closeOnEscape: false },
   );
 
   const formRef = useRef<HTMLFormElement>(null);
@@ -125,7 +137,7 @@ export function FormModal({
       await onSubmit(values);
       handleClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(getErrorMessage(err, "Something went wrong."));
       setSubmitting(false);
     }
   };
@@ -143,6 +155,15 @@ export function FormModal({
         onSubmit={handleSubmit}
         onKeyDown={handleKeyDown}
       >
+        <button
+          type="button"
+          className={styles.close}
+          aria-label="Close"
+          onClick={handleClose}
+        >
+          <X size={18} />
+        </button>
+
         <h2 id={titleId} className={styles.title}>
           {title}
         </h2>
@@ -174,14 +195,33 @@ export function FormModal({
                 type="file"
                 accept="image/*"
               />
+            ) : field.type === "select" ? (
+              <select
+                id={field.name}
+                name={field.name}
+                className={styles.input}
+                defaultValue={initial?.[field.name] ?? ""}
+                required={field.required}
+              >
+                <option value="" disabled>
+                  {field.placeholder ?? "Select…"}
+                </option>
+                {field.options?.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             ) : (
               <input
                 id={field.name}
                 name={field.name}
                 className={styles.input}
                 type={field.type ?? "text"}
+                step={field.type === "number" ? "any" : undefined}
                 placeholder={field.placeholder}
                 defaultValue={initial?.[field.name] ?? ""}
+                required={field.required}
               />
             )}
           </div>
@@ -199,7 +239,7 @@ export function FormModal({
             Cancel
           </button>
           <button type="submit" className={styles.submit} disabled={submitting}>
-            {submitting && <span className={styles.spinner} aria-hidden="true" />}
+            {submitting && <Spinner />}
             {submitting ? pendingLabel : submitLabel}
           </button>
         </div>

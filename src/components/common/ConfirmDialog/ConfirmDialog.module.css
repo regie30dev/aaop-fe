@@ -111,21 +111,6 @@
   cursor: not-allowed;
 }
 
-.spinner {
-  width: 15px;
-  height: 15px;
-  border: 2px solid rgba(255, 255, 255, 0.45);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: cdSpin 0.7s linear infinite;
-}
-
-@keyframes cdSpin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 @keyframes cdFadeIn {
   from {
     opacity: 0;

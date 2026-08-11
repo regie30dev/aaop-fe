@@ -22,6 +22,7 @@ import type { OfficeFormValues } from "../../../services/offices";
 import { FormModal } from "../../common/FormModal/FormModal";
 import type { ModalField } from "../../common/FormModal/FormModal";
 import { ConfirmDialog } from "../../common/ConfirmDialog/ConfirmDialog";
+import { getErrorMessage } from "../../../utils/errors";
 import styles from "./OfficeScreen.module.css";
 
 const columns = [
@@ -82,7 +83,7 @@ export function OfficeScreen() {
     try {
       setOffices(await getOffices());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load offices.");
+      setError(getErrorMessage(err, "Failed to load offices."));
     } finally {
       setLoading(false);
     }
@@ -98,9 +99,7 @@ export function OfficeScreen() {
       const values = await getOffice(row.id);
       setForm({ mode: "edit", id: row.id, values });
     } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Failed to open the office.",
-      );
+      setActionError(getErrorMessage(err, "Failed to open the office."));
     }
   };
 
