@@ -1,0 +1,176 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(20, 24, 33, 0.55);
+  animation: cdFadeIn 0.24s ease forwards;
+}
+
+.backdropClosing {
+  animation: cdFadeOut 0.22s ease forwards;
+}
+
+.card {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 26px 26px 22px;
+  text-align: center;
+  transform-origin: center;
+  animation: cdPop 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.cardClosing {
+  animation: cdPopOut 0.22s ease forwards;
+}
+
+.iconWrap {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #d92d20;
+  background: #fef3f2;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #101828;
+}
+
+.message {
+  margin: 0 auto;
+  max-width: 340px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #475467;
+}
+
+.error {
+  margin: 14px 0 0;
+  padding: 9px 12px;
+  border-radius: 6px;
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  color: #b42318;
+  font-size: 13px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.cancel,
+.confirm {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cancel {
+  color: #344054;
+  background: #fff;
+  border: 1px solid #d0d5dd;
+}
+
+.cancel:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.confirm {
+  color: #fff;
+  background: #d92d20;
+  border: 1px solid #d92d20;
+}
+
+.confirm:hover:not(:disabled) {
+  background: #b42318;
+  border-color: #b42318;
+}
+
+.cancel:disabled,
+.confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: cdSpin 0.7s linear infinite;
+}
+
+@keyframes cdSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes cdFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cdFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes cdPop {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cdPopOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .backdropClosing,
+  .card,
+  .cardClosing {
+    animation-duration: 0.01ms;
+  }
+}

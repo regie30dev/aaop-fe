@@ -1,26 +1,172 @@
-import { employeeList } from "../data/employeeList";
-import type { DirectoryEmployee } from "../types";
+import { api } from "../api/client";
+import type { DirectoryEmployee, MailStatus, NewEmployee } from "../types";
 
 /**
- * Data-access seam for the employee directory (Employee overlay screen).
- * Presentation imports from here, not from `src/data/**` directly, so the
- * mock → API swap is confined to this module (make it `async` + `fetch(...)`).
+ * Data-access seam for the employee directory, backed by the aaop-be API.
+ *   list   -> GET  /employees
+ *   create -> POST /employees   (persists to the Employee DB table)
  */
-export function getDirectoryEmployees(): DirectoryEmployee[] {
-  return employeeList;
+
+/** Shape returned by the backend Employee model. */
+interface ApiEmployee {
+  id: string;
+  employeeNo: string;
+  firstName: string;
+  middleName?: string | null;
+  lastName: string;
+  position?: string | null;
+  office?: string | null;
+  dateOfBirth?: string | null;
+  email?: string | null;
+  isActive: boolean;
 }
 
-const EMPLOYEE_NO_PREFIX = "EMP-";
+interface ListResponse {
+  status: string;
+  items: ApiEmployee[];
+  pagination?: { total: number };
+}
+
+// Deterministic dot color for the Office column (BE has no color field).
+const OFFICE_PALETTE = [
+  "#2e90fa",
+  "#12b76a",
+  "#f79009",
+  "#f04438",
+  "#eab308",
+  "#6c5ce7",
+];
+
+function officeColor(office: string): string {
+  let hash = 0;
+  for (let i = 0; i < office.length; i += 1) {
+    hash = (hash + office.charCodeAt(i)) % OFFICE_PALETTE.length;
+  }
+  return OFFICE_PALETTE[hash];
+}
+
+function fullName(e: ApiEmployee): string {
+  return [e.firstName, e.middleName, e.lastName].filter(Boolean).join(" ");
+}
+
+/** Map a backend Employee onto the directory table's view-model. */
+function toDirectoryEmployee(e: ApiEmployee): DirectoryEmployee {
+  const office = e.office ?? "—";
+  const mailStatus: MailStatus = e.email ? "verified" : "warning";
+  return {
+    id: e.id,
+    employeeNo: e.employeeNo,
+    name: fullName(e),
+    email: e.email ?? "—",
+    mailStatus,
+    department: office,
+    departmentColor: officeColor(office),
+    role: e.position ?? "—",
+    status: e.isActive ? "Active" : "Inactive",
+    avatar: `https://i.pravatar.cc/64?u=${encodeURIComponent(e.employeeNo)}`,
+  };
+}
+
+export async function getDirectoryEmployees(): Promise<DirectoryEmployee[]> {
+  // pageSize=100 keeps the whole directory available for display + numbering.
+  const res = await api.get<ListResponse>("/employees?pageSize=100");
+  return res.items.map(toDirectoryEmployee);
+}
+
+/** Total number of employees stored in the DB (from the list pagination meta). */
+export async function getEmployeeCount(): Promise<number> {
+  const res = await api.get<ListResponse>("/employees?pageSize=1");
+  return res.pagination?.total ?? res.items.length;
+}
+
+const DEFAULT_EMPLOYEE_NO = "EMP-001";
 
 /**
- * System-generated next employee number, derived from the highest numeric
- * suffix currently stored (e.g. last "EMP-1008" -> "EMP-1009"). Falls back to
- * EMP-1001 when the directory is empty.
+ * Next employee number, derived from the highest numeric value among the rows
+ * currently STORED in the DB — not from any mock/count. The prefix and
+ * zero-padding width of that highest row are preserved (e.g. last "EMP-001" ->
+ * "EMP-002", last "EMP-1008" -> "EMP-1009"). Falls back to EMP-001 when empty.
  */
-export function getNextEmployeeNo(): string {
-  const numbers = getDirectoryEmployees()
-    .map((e) => Number.parseInt(e.employeeNo.replace(/\D/g, ""), 10))
-    .filter((n) => !Number.isNaN(n));
-  const last = numbers.length > 0 ? Math.max(...numbers) : 1000;
-  return `${EMPLOYEE_NO_PREFIX}${last + 1}`;
+export function getNextEmployeeNo(existing: DirectoryEmployee[]): string {
+  let best: { prefix: string; width: number; value: number } | null = null;
+  for (const e of existing) {
+    const match = e.employeeNo.match(/^(.*?)(\d+)\s*$/);
+    if (!match) continue;
+    const value = Number.parseInt(match[2], 10);
+    if (!best || value > best.value) {
+      best = { prefix: match[1], width: match[2].length, value };
+    }
+  }
+  if (!best) return DEFAULT_EMPLOYEE_NO;
+  const next = String(best.value + 1).padStart(best.width, "0");
+  return `${best.prefix}${next}`;
+}
+
+/** Editable fields used to pre-fill the form when editing an employee. */
+export interface EmployeeFormValues {
+  employeeNo: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  dateOfBirth: string;
+  position: string;
+  office: string;
+  email: string;
+}
+
+interface SingleResponse {
+  status: string;
+  data: ApiEmployee;
+}
+
+// Build the mutable field payload, sending optionals only when present
+// (the BE rejects empty date/email strings).
+function toMutablePayload(input: NewEmployee): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    firstName: input.firstName,
+    lastName: input.lastName,
+  };
+  if (input.middleName) payload.middleName = input.middleName;
+  if (input.position) payload.position = input.position;
+  if (input.office) payload.office = input.office;
+  if (input.dateOfBirth) payload.dateOfBirth = input.dateOfBirth;
+  if (input.email) payload.email = input.email;
+  return payload;
+}
+
+/** Persist a new employee to the DB via POST /employees. */
+export async function createEmployee(input: NewEmployee): Promise<void> {
+  await api.post("/employees", {
+    employeeNo: input.employeeNo,
+    ...toMutablePayload(input),
+  });
+}
+
+/** Fetch a single employee's editable fields for the edit form. */
+export async function getEmployee(id: string): Promise<EmployeeFormValues> {
+  const res = await api.get<SingleResponse>(`/employees/${id}`);
+  const e = res.data;
+  return {
+    employeeNo: e.employeeNo,
+    firstName: e.firstName ?? "",
+    middleName: e.middleName ?? "",
+    lastName: e.lastName ?? "",
+    dateOfBirth: e.dateOfBirth ? e.dateOfBirth.slice(0, 10) : "",
+    position: e.position ?? "",
+    office: e.office ?? "",
+    email: e.email ?? "",
+  };
+}
+
+/** Update an existing employee via PATCH /employees/:id (employeeNo is fixed). */
+export async function updateEmployee(
+  id: string,
+  input: NewEmployee,
+): Promise<void> {
+  await api.patch(`/employees/${id}`, toMutablePayload(input));
+}
+
+/** Delete an employee via DELETE /employees/:id. */
+export async function deleteEmployee(id: string): Promise<void> {
+  await api.del(`/employees/${id}`);
 }

@@ -44,7 +44,7 @@ export const SCREENS: Record<ScreenId, ScreenConfig> = {
     icon: UserRound,
     overlay: EmployeeScreen,
   },
-  department: { id: "department", label: "Department", icon: Building2 },
+  department: { id: "department", label: "Office", icon: Building2 },
 };
 
 /** Display order in the sidebar. */

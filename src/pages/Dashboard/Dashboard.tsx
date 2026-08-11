@@ -1,8 +1,5 @@
 import { Topbar } from "../../components/layout/Topbar/Topbar";
 import { StatCards } from "../../components/dashboard/StatCards/StatCards";
-import { AvgWorkHoursChart } from "../../components/dashboard/AvgWorkHoursChart/AvgWorkHoursChart";
-import { WorkHoursMonthChart } from "../../components/dashboard/WorkHoursMonthChart/WorkHoursMonthChart";
-import { EmployeeTable } from "../../components/dashboard/EmployeeTable/EmployeeTable";
 import styles from "./Dashboard.module.css";
 
 interface DashboardProps {
@@ -16,13 +13,6 @@ export function Dashboard({ onMenuClick }: DashboardProps) {
 
       <div className={styles.stack}>
         <StatCards />
-
-        <div className={styles.charts}>
-          <AvgWorkHoursChart />
-          <WorkHoursMonthChart />
-        </div>
-
-        <EmployeeTable />
       </div>
     </div>
   );

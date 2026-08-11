@@ -17,7 +17,7 @@ export const statCards: StatCard[] = [
   },
   {
     id: "departments",
-    label: "Departments",
+    label: "Offices",
     value: "8",
     trend: "+15%",
     trendDirection: "up",
@@ -25,22 +25,22 @@ export const statCards: StatCard[] = [
     icon: "departments",
   },
   {
-    id: "today-presents",
-    label: "Today Presents",
+    id: "properties",
+    label: "Properties",
     value: "178",
     trend: "+5%",
     trendDirection: "up",
     comparison: "vs Yesterday",
-    icon: "presents",
+    icon: "properties",
   },
   {
-    id: "today-absents",
-    label: "Today Absents",
+    id: "accountabilities",
+    label: "Accountabilities",
     value: "5",
     trend: "+2%",
     trendDirection: "up",
     comparison: "vs Yesterday",
-    icon: "absents",
+    icon: "accountabilities",
   },
 ];
 

@@ -1,4 +1,4 @@
-import { ChevronDown, LogOut, Users } from "lucide-react";
+import { LogOut, Users } from "lucide-react";
 import { SCREENS, SCREEN_ORDER } from "../../../navigation/screens";
 import type { ScreenId } from "../../../navigation/screens";
 import styles from "./Sidebar.module.css";
@@ -19,19 +19,6 @@ export function Sidebar({ isOpen, activeScreen, onSelect }: SidebarProps) {
         </span>
         <span className={styles.brandName}>OP Assets</span>
       </div>
-
-      <button className={styles.profile} type="button">
-        <img
-          className={styles.avatar}
-          src="https://i.pravatar.cc/80?img=13"
-          alt="Sebastian L."
-        />
-        <span className={styles.profileText}>
-          <span className={styles.profileName}>Sebastian L.</span>
-          <span className={styles.profileRole}>HR Manager</span>
-        </span>
-        <ChevronDown size={16} className={styles.profileChevron} />
-      </button>
 
       <nav className={styles.nav}>
         <div className={styles.section}>

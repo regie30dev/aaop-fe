@@ -1,21 +1,23 @@
 import {
   Building2,
   ChevronRight,
+  ClipboardCheck,
+  Package,
   TrendingUp,
-  UserCheck,
-  UserMinus,
   Users,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { ComponentType } from "react";
 import type { StatCard as StatCardType } from "../../../types";
 import { getStatCards } from "../../../services/dashboard";
+import { getEmployeeCount } from "../../../services/employees";
 import styles from "./StatCards.module.css";
 
 const icons: Record<StatCardType["icon"], ComponentType<{ size?: number }>> = {
   employees: Users,
   departments: Building2,
-  presents: UserCheck,
-  absents: UserMinus,
+  properties: Package,
+  accountabilities: ClipboardCheck,
 };
 
 function StatCard({ card }: { card: StatCardType }) {
@@ -46,9 +48,31 @@ function StatCard({ card }: { card: StatCardType }) {
 }
 
 export function StatCards() {
+  const [employeeCount, setEmployeeCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getEmployeeCount()
+      .then((count) => {
+        if (active) setEmployeeCount(count);
+      })
+      .catch(() => {
+        /* leave the placeholder if the count can't be fetched */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const cards = getStatCards().map((card) =>
+    card.id === "total-employees"
+      ? { ...card, value: employeeCount === null ? "…" : String(employeeCount) }
+      : card,
+  );
+
   return (
     <section className={styles.grid}>
-      {getStatCards().map((card) => (
+      {cards.map((card) => (
         <StatCard key={card.id} card={card} />
       ))}
     </section>

@@ -7,7 +7,7 @@ export interface StatCard {
   trend: string;
   trendDirection: TrendDirection;
   comparison: string;
-  icon: "employees" | "departments" | "presents" | "absents";
+  icon: "employees" | "departments" | "properties" | "accountabilities";
 }
 
 export interface AvgWorkHoursPoint {

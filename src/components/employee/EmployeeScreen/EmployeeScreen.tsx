@@ -2,22 +2,31 @@ import {
   AlertCircle,
   CheckCircle2,
   ChevronsUpDown,
+  Pencil,
   Search,
+  Trash2,
   UserPlus,
   XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ComponentType } from "react";
 import type {
+  DirectoryEmployee,
   EmployeeListStatus,
   MailStatus,
   NewEmployee,
 } from "../../../types";
 import {
+  createEmployee,
+  deleteEmployee,
   getDirectoryEmployees,
+  getEmployee,
   getNextEmployeeNo,
+  updateEmployee,
 } from "../../../services/employees";
+import type { EmployeeFormValues } from "../../../services/employees";
 import { AddEmployeeForm } from "../AddEmployeeForm/AddEmployeeForm";
+import { ConfirmDialog } from "../../common/ConfirmDialog/ConfirmDialog";
 import styles from "./EmployeeScreen.module.css";
 
 const columns = ["Employee No.", "Name", "Email", "Office", "Position", "Status"];
@@ -45,12 +54,68 @@ function MailIcon({ status }: { status: MailStatus }) {
 }
 
 export function EmployeeScreen() {
-  const [showAddForm, setShowAddForm] = useState(false);
-  const employees = getDirectoryEmployees();
+  const [employees, setEmployees] = useState<DirectoryEmployee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAddEmployee = (employee: NewEmployee) => {
-    // TODO: persist via the employees service once a backend is wired.
-    console.info("New employee submitted", employee);
+  // Form modal: null = closed; otherwise add mode (no id) or edit mode (with id).
+  const [form, setForm] = useState<
+    | { mode: "add" }
+    | { mode: "edit"; id: string; values: EmployeeFormValues }
+    | null
+  >(null);
+  // Transient banner for edit-open failures (kept off the list state).
+  const [actionError, setActionError] = useState<string | null>(null);
+  // Row pending a delete confirmation (drives the confirmation modal).
+  const [pendingDelete, setPendingDelete] = useState<DirectoryEmployee | null>(
+    null,
+  );
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setEmployees(await getDirectoryEmployees());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load employees.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const openEdit = async (row: DirectoryEmployee) => {
+    setActionError(null);
+    try {
+      const values = await getEmployee(row.id);
+      setForm({ mode: "edit", id: row.id, values });
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to open the employee.",
+      );
+    }
+  };
+
+  // Runs when the confirmation modal's Delete is pressed; errors surface in the
+  // modal itself (it stays open), so no try/catch here.
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    await deleteEmployee(pendingDelete.id);
+    await load();
+    // The dialog plays its exit animation and then calls onClose to unmount.
+  };
+
+  // Create or update, then refresh so rows + next number stay current.
+  const handleSubmit = async (employee: NewEmployee) => {
+    if (form?.mode === "edit") {
+      await updateEmployee(form.id, employee);
+    } else {
+      await createEmployee(employee);
+    }
+    await load();
   };
 
   return (
@@ -69,12 +134,14 @@ export function EmployeeScreen() {
         <button
           className={styles.addNew}
           type="button"
-          onClick={() => setShowAddForm(true)}
+          onClick={() => setForm({ mode: "add" })}
         >
           <UserPlus size={16} />
           Add New Employee
         </button>
       </div>
+
+      {actionError && <p className={styles.actionBanner}>{actionError}</p>}
 
       <div className={styles.tableWrap}>
         <table className={styles.table}>
@@ -88,10 +155,37 @@ export function EmployeeScreen() {
                   </span>
                 </th>
               ))}
+              <th className={styles.actionsHead}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {employees.map((row) => {
+            {loading && (
+              <tr>
+                <td className={styles.stateCell} colSpan={columns.length + 1}>
+                  Loading employees…
+                </td>
+              </tr>
+            )}
+            {!loading && error && (
+              <tr>
+                <td
+                  className={`${styles.stateCell} ${styles.stateError}`}
+                  colSpan={columns.length + 1}
+                >
+                  {error}
+                </td>
+              </tr>
+            )}
+            {!loading && !error && employees.length === 0 && (
+              <tr>
+                <td className={styles.stateCell} colSpan={columns.length + 1}>
+                  No employees yet. Add the first one.
+                </td>
+              </tr>
+            )}
+            {!loading &&
+              !error &&
+              employees.map((row) => {
               const StatusIcon = statusIcon[row.status];
               return (
                 <tr key={row.id}>
@@ -130,6 +224,28 @@ export function EmployeeScreen() {
                       {row.status}
                     </span>
                   </td>
+                  <td>
+                    <div className={styles.actions}>
+                      <button
+                        type="button"
+                        className={styles.actionEdit}
+                        aria-label={`Edit ${row.name}`}
+                        title="Edit"
+                        onClick={() => openEdit(row)}
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.actionDelete}
+                        aria-label={`Delete ${row.name}`}
+                        title="Delete"
+                        onClick={() => setPendingDelete(row)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
@@ -137,11 +253,35 @@ export function EmployeeScreen() {
         </table>
       </div>
 
-      {showAddForm && (
+      {form && (
         <AddEmployeeForm
-          employeeNo={getNextEmployeeNo()}
-          onClose={() => setShowAddForm(false)}
-          onSubmit={handleAddEmployee}
+          key={form.mode === "edit" ? form.id : "add"}
+          mode={form.mode}
+          employeeNo={
+            form.mode === "edit"
+              ? form.values.employeeNo
+              : getNextEmployeeNo(employees)
+          }
+          initial={form.mode === "edit" ? form.values : undefined}
+          onClose={() => setForm(null)}
+          onSubmit={handleSubmit}
+        />
+      )}
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Delete Employee"
+          message={
+            <>
+              Are you sure you want to delete{" "}
+              <strong>{pendingDelete.name}</strong> ({pendingDelete.employeeNo})?
+              This action cannot be undone.
+            </>
+          }
+          confirmLabel="Delete"
+          pendingLabel="Deleting…"
+          onConfirm={confirmDelete}
+          onClose={() => setPendingDelete(null)}
         />
       )}
     </div>

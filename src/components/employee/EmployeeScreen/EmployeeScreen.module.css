@@ -119,6 +119,63 @@
   color: #475467;
 }
 
+.actionBanner {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  color: #b42318;
+  font-size: 13px;
+}
+
+.actionsHead {
+  text-align: right;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.actionEdit,
+.actionDelete {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: #667085;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.actionEdit:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.actionDelete:hover {
+  color: #f04438;
+  border-color: #fecdca;
+  background: #fef3f2;
+}
+
+.stateCell {
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #667085;
+}
+
+.stateError {
+  color: #f04438;
+}
+
 /* Name */
 .person {
   display: flex;
