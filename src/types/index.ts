@@ -29,7 +29,8 @@ export type EmploymentStatus =
   | "Internship"
   | "Contract";
 
-export interface Employee {
+/* Dashboard "Employee List" widget (FE_UI_1) */
+export interface DashboardEmployee {
   id: string;
   employeeId: string;
   name: string;
@@ -45,7 +46,7 @@ export type EmployeeListStatus = "Active" | "Inactive" | "Vacation";
 
 export type MailStatus = "verified" | "warning" | "error";
 
-export interface EmployeeListRow {
+export interface DirectoryEmployee {
   id: string;
   employeeNo: string;
   name: string;
@@ -56,4 +57,17 @@ export interface EmployeeListRow {
   role: string;
   status: EmployeeListStatus;
   avatar: string;
+}
+
+/* Payload emitted by the Add New Employee form (FE_UI_3) */
+export interface NewEmployee {
+  employeeNo: string;
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  dateOfBirth: string;
+  position: string;
+  office: string;
+  email?: string;
+  picture?: File | null;
 }

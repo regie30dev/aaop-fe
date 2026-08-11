@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type { StatCard as StatCardType } from "../../../types";
-import { statCards } from "../../../data/dashboardData";
+import { getStatCards } from "../../../services/dashboard";
 import styles from "./StatCards.module.css";
 
 const icons: Record<StatCardType["icon"], ComponentType<{ size?: number }>> = {
@@ -48,7 +48,7 @@ function StatCard({ card }: { card: StatCardType }) {
 export function StatCards() {
   return (
     <section className={styles.grid}>
-      {statCards.map((card) => (
+      {getStatCards().map((card) => (
         <StatCard key={card.id} card={card} />
       ))}
     </section>

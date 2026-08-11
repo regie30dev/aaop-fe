@@ -8,8 +8,15 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import type { ComponentType } from "react";
-import type { EmployeeListStatus, MailStatus } from "../../../types";
-import { employeeList } from "../../../data/employeeList";
+import type {
+  EmployeeListStatus,
+  MailStatus,
+  NewEmployee,
+} from "../../../types";
+import {
+  getDirectoryEmployees,
+  getNextEmployeeNo,
+} from "../../../services/employees";
 import { AddEmployeeForm } from "../AddEmployeeForm/AddEmployeeForm";
 import styles from "./EmployeeScreen.module.css";
 
@@ -39,6 +46,12 @@ function MailIcon({ status }: { status: MailStatus }) {
 
 export function EmployeeScreen() {
   const [showAddForm, setShowAddForm] = useState(false);
+  const employees = getDirectoryEmployees();
+
+  const handleAddEmployee = (employee: NewEmployee) => {
+    // TODO: persist via the employees service once a backend is wired.
+    console.info("New employee submitted", employee);
+  };
 
   return (
     <div className={styles.screen}>
@@ -78,7 +91,7 @@ export function EmployeeScreen() {
             </tr>
           </thead>
           <tbody>
-            {employeeList.map((row) => {
+            {employees.map((row) => {
               const StatusIcon = statusIcon[row.status];
               return (
                 <tr key={row.id}>
@@ -125,7 +138,11 @@ export function EmployeeScreen() {
       </div>
 
       {showAddForm && (
-        <AddEmployeeForm onClose={() => setShowAddForm(false)} />
+        <AddEmployeeForm
+          employeeNo={getNextEmployeeNo()}
+          onClose={() => setShowAddForm(false)}
+          onSubmit={handleAddEmployee}
+        />
       )}
     </div>
   );

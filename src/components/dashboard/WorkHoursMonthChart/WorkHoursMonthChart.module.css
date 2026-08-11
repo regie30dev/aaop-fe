@@ -24,17 +24,7 @@
 }
 
 .dropdown {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--color-text-muted);
-  background: var(--color-surface-alt);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  padding: 7px 12px;
-  white-space: nowrap;
+  composes: pill from "../../../styles/controls.module.css";
 }
 
 .legend {
@@ -55,11 +45,11 @@
 }
 
 .dotWork {
-  background: #2563eb;
+  background: var(--color-primary);
 }
 
 .dotOver {
-  background: #dc2626;
+  background: var(--color-accent-red);
 }
 
 .legendLabel {

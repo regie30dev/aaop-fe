@@ -8,7 +8,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { avgWorkHours } from "../../../data/dashboardData";
+import { getAvgWorkHours } from "../../../services/dashboard";
+import { chartColors } from "../../../styles/chartColors";
 import styles from "./AvgWorkHoursChart.module.css";
 
 export function AvgWorkHoursChart() {
@@ -37,13 +38,21 @@ export function AvgWorkHoursChart() {
       <div className={styles.chart}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
-            data={avgWorkHours}
+            data={getAvgWorkHours()}
             margin={{ top: 20, right: 8, left: -18, bottom: 0 }}
           >
             <defs>
               <linearGradient id="avgHoursFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#2563eb" stopOpacity={0.28} />
-                <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
+                <stop
+                  offset="0%"
+                  stopColor={chartColors.primary}
+                  stopOpacity={0.28}
+                />
+                <stop
+                  offset="100%"
+                  stopColor={chartColors.primary}
+                  stopOpacity={0}
+                />
               </linearGradient>
             </defs>
             <CartesianGrid
@@ -77,7 +86,7 @@ export function AvgWorkHoursChart() {
             <Area
               type="monotone"
               dataKey="hours"
-              stroke="#2563eb"
+              stroke={chartColors.primary}
               strokeWidth={2.5}
               fill="url(#avgHoursFill)"
               activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }}

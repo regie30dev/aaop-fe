@@ -1,6 +1,6 @@
 import type {
   AvgWorkHoursPoint,
-  Employee,
+  DashboardEmployee,
   MonthlyWorkHoursPoint,
   StatCard,
 } from "../types";
@@ -61,7 +61,7 @@ export const monthlyWorkHours: MonthlyWorkHoursPoint[] = [
   { label: "Week 4", workTime: 39, overtime: 9 },
 ];
 
-export const employees: Employee[] = [
+export const employees: DashboardEmployee[] = [
   {
     id: "1",
     employeeId: "Orac1810",

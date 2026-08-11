@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { useAnimatedClose } from "../../../hooks/useAnimatedClose";
 import styles from "./ScreenOverlay.module.css";
 
 // Keep in sync with the exit animation duration in ScreenOverlay.module.css.
@@ -13,24 +13,10 @@ interface ScreenOverlayProps {
 }
 
 export function ScreenOverlay({ title, onClose, children }: ScreenOverlayProps) {
-  const [closing, setClosing] = useState(false);
-
-  // Play the exit animation, then unmount via onClose.
-  const handleClose = () => {
-    if (closing) return;
-    setClosing(true);
-    window.setTimeout(onClose, EXIT_DURATION_MS);
-  };
-
-  // Close on Escape.
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") handleClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { closing, close: handleClose } = useAnimatedClose(
+    onClose,
+    EXIT_DURATION_MS,
+  );
 
   return (
     <div

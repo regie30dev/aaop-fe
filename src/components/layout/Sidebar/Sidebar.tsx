@@ -1,33 +1,12 @@
-import {
-  ChevronDown,
-  Home,
-  LayoutDashboard,
-  LogOut,
-  Building2,
-  UserRound,
-  Users,
-  Wrench,
-} from "lucide-react";
-import type { ComponentType } from "react";
+import { ChevronDown, LogOut, Users } from "lucide-react";
+import { SCREENS, SCREEN_ORDER } from "../../../navigation/screens";
+import type { ScreenId } from "../../../navigation/screens";
 import styles from "./Sidebar.module.css";
-
-interface NavItem {
-  label: string;
-  icon: ComponentType<{ size?: number }>;
-}
-
-const mainMenu: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard },
-  { label: "Accountability", icon: Wrench },
-  { label: "Property", icon: Home },
-  { label: "Employee", icon: UserRound },
-  { label: "Department", icon: Building2 },
-];
 
 interface SidebarProps {
   isOpen: boolean;
-  activeScreen: string;
-  onSelect: (label: string) => void;
+  activeScreen: ScreenId;
+  onSelect: (id: ScreenId) => void;
   onClose: () => void;
 }
 
@@ -58,15 +37,16 @@ export function Sidebar({ isOpen, activeScreen, onSelect }: SidebarProps) {
         <div className={styles.section}>
           <p className={styles.sectionTitle}>MAIN MENU</p>
           <ul>
-            {mainMenu.map(({ label, icon: Icon }) => {
-              const isActive = label === activeScreen;
+            {SCREEN_ORDER.map((id) => {
+              const { label, icon: Icon } = SCREENS[id];
+              const isActive = id === activeScreen;
               return (
-                <li key={label}>
+                <li key={id}>
                   <button
                     type="button"
                     className={`${styles.navItem} ${isActive ? styles.active : ""}`}
                     aria-current={isActive ? "page" : undefined}
-                    onClick={() => onSelect(label)}
+                    onClick={() => onSelect(id)}
                   >
                     <Icon size={18} />
                     <span>{label}</span>

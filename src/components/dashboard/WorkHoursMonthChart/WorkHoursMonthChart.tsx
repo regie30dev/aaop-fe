@@ -8,7 +8,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { monthlyWorkHours } from "../../../data/dashboardData";
+import { getMonthlyWorkHours } from "../../../services/dashboard";
+import { chartColors } from "../../../styles/chartColors";
 import styles from "./WorkHoursMonthChart.module.css";
 
 export function WorkHoursMonthChart() {
@@ -37,7 +38,7 @@ export function WorkHoursMonthChart() {
       <div className={styles.chart}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={monthlyWorkHours}
+            data={getMonthlyWorkHours()}
             barGap={6}
             margin={{ top: 10, right: 8, left: -18, bottom: 0 }}
           >
@@ -69,14 +70,14 @@ export function WorkHoursMonthChart() {
             <Bar
               dataKey="workTime"
               name="Work-Time"
-              fill="#2563eb"
+              fill={chartColors.primary}
               radius={[6, 6, 0, 0]}
               barSize={14}
             />
             <Bar
               dataKey="overtime"
               name="Overtime"
-              fill="#dc2626"
+              fill={chartColors.accentRed}
               radius={[6, 6, 0, 0]}
               barSize={14}
             />

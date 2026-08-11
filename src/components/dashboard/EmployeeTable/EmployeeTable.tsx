@@ -1,6 +1,6 @@
 import { ChevronDown, Eye, Maximize2 } from "lucide-react";
 import type { DepartmentTag, EmploymentStatus } from "../../../types";
-import { employees } from "../../../data/dashboardData";
+import { getDashboardEmployees } from "../../../services/dashboard";
 import styles from "./EmployeeTable.module.css";
 
 const filters = ["All Status", "All Department", "Last 14 Days"];
@@ -65,7 +65,7 @@ export function EmployeeTable() {
             </tr>
           </thead>
           <tbody>
-            {employees.map((employee) => (
+            {getDashboardEmployees().map((employee) => (
               <tr key={employee.id}>
                 <td className={styles.checkCol}>
                   <input

@@ -1,4 +1,4 @@
-import type { EmployeeListRow } from "../types";
+import type { DirectoryEmployee } from "../types";
 
 // Department dot colors, from the FE_UI_2 design.
 const dept = {
@@ -9,7 +9,7 @@ const dept = {
   it: "#2e90fa",
 };
 
-export const employeeList: EmployeeListRow[] = [
+export const employeeList: DirectoryEmployee[] = [
   {
     id: "1",
     employeeNo: "EMP-1001",

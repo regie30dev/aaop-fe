@@ -1,20 +1,23 @@
 import { useState } from "react";
-import { EmployeeScreen } from "./components/employee/EmployeeScreen/EmployeeScreen";
 import { Sidebar } from "./components/layout/Sidebar/Sidebar";
 import { ScreenOverlay } from "./components/overlay/ScreenOverlay/ScreenOverlay";
 import { Dashboard } from "./pages/Dashboard/Dashboard";
+import { HOME_SCREEN, SCREENS } from "./navigation/screens";
+import type { ScreenId } from "./navigation/screens";
 import styles from "./App.module.css";
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeScreen, setActiveScreen] = useState("Dashboard");
+  const [activeScreen, setActiveScreen] = useState<ScreenId>(HOME_SCREEN);
 
-  const handleSelect = (label: string) => {
-    setActiveScreen(label);
+  const handleSelect = (id: ScreenId) => {
+    setActiveScreen(id);
     setSidebarOpen(false); // close the mobile drawer on navigation
   };
 
-  const isOverlayOpen = activeScreen !== "Dashboard";
+  const current = SCREENS[activeScreen];
+  const isOverlayOpen = activeScreen !== HOME_SCREEN;
+  const OverlayContent = current.overlay;
 
   return (
     <div className={styles.shell}>
@@ -38,10 +41,10 @@ export default function App() {
 
       {isOverlayOpen && (
         <ScreenOverlay
-          title={activeScreen}
-          onClose={() => setActiveScreen("Dashboard")}
+          title={current.label}
+          onClose={() => setActiveScreen(HOME_SCREEN)}
         >
-          {activeScreen === "Employee" && <EmployeeScreen />}
+          {OverlayContent && <OverlayContent />}
         </ScreenOverlay>
       )}
     </div>
