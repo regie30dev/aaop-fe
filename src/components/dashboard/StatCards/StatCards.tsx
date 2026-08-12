@@ -10,13 +10,11 @@ import { useEffect, useState } from "react";
 import type { ComponentType } from "react";
 import type { StatCard as StatCardType } from "../../../types";
 import { getStatCards } from "../../../services/dashboard";
-import { getEmployeeCount } from "../../../services/employees";
+import { getDashboardStats } from "../../../services/stats";
+import type { DashboardStats } from "../../../services/stats";
 import { onEmployeesChanged } from "../../../services/employeeEvents";
-import { getOfficeCount } from "../../../services/offices";
 import { onOfficesChanged } from "../../../services/officeEvents";
-import { getPropertyCount } from "../../../services/properties";
 import { onPropertiesChanged } from "../../../services/propertyEvents";
-import { getAccountabilityCount } from "../../../services/accountabilities";
 import { onAccountabilitiesChanged } from "../../../services/accountabilityEvents";
 import styles from "./StatCards.module.css";
 
@@ -55,98 +53,61 @@ function StatCard({ card }: { card: StatCardType }) {
 }
 
 export function StatCards() {
-  const [employeeCount, setEmployeeCount] = useState<number | null>(null);
-  const [officeCount, setOfficeCount] = useState<number | null>(null);
-  const [propertyCount, setPropertyCount] = useState<number | null>(null);
-  const [accountabilityCount, setAccountabilityCount] = useState<number | null>(
-    null,
-  );
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
     let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
-    const refreshEmployees = () => {
-      getEmployeeCount()
-        .then((count) => {
-          if (active) setEmployeeCount(count);
+    // One request pulls all four counts (see backend GET /stats).
+    const refresh = () => {
+      getDashboardStats()
+        .then((next) => {
+          if (active) setStats(next);
         })
         .catch(() => {
-          /* leave the placeholder if the count can't be fetched */
+          /* keep the last-known values if the fetch fails */
         });
     };
 
-    const refreshOffices = () => {
-      getOfficeCount()
-        .then((count) => {
-          if (active) setOfficeCount(count);
-        })
-        .catch(() => {
-          /* leave the placeholder if the count can't be fetched */
-        });
+    // Any single mutation emits its own "*.changed" event, and a bulk action
+    // can emit several in quick succession. Coalesce them into one refetch so
+    // a burst of events doesn't fan out into a burst of requests.
+    const scheduleRefresh = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(refresh, 250);
     };
 
-    const refreshProperties = () => {
-      getPropertyCount()
-        .then((count) => {
-          if (active) setPropertyCount(count);
-        })
-        .catch(() => {
-          /* leave the placeholder if the count can't be fetched */
-        });
-    };
-
-    const refreshAccountabilities = () => {
-      getAccountabilityCount()
-        .then((count) => {
-          if (active) setAccountabilityCount(count);
-        })
-        .catch(() => {
-          /* leave the placeholder if the count can't be fetched */
-        });
-    };
-
-    refreshEmployees();
-    refreshOffices();
-    refreshProperties();
-    refreshAccountabilities();
-    const unsubEmployees = onEmployeesChanged(refreshEmployees);
-    const unsubOffices = onOfficesChanged(refreshOffices);
-    const unsubProperties = onPropertiesChanged(refreshProperties);
-    const unsubAccountabilities = onAccountabilitiesChanged(
-      refreshAccountabilities,
-    );
+    refresh();
+    const unsubscribers = [
+      onEmployeesChanged(scheduleRefresh),
+      onOfficesChanged(scheduleRefresh),
+      onPropertiesChanged(scheduleRefresh),
+      onAccountabilitiesChanged(scheduleRefresh),
+    ];
 
     return () => {
       active = false;
-      unsubEmployees();
-      unsubOffices();
-      unsubProperties();
-      unsubAccountabilities();
+      if (timer) clearTimeout(timer);
+      for (const unsubscribe of unsubscribers) unsubscribe();
     };
   }, []);
 
+  const valueFor = (count: number | undefined): string =>
+    count === undefined ? "…" : String(count);
+
   const cards = getStatCards().map((card) => {
     if (card.id === "total-employees") {
-      return {
-        ...card,
-        value: employeeCount === null ? "…" : String(employeeCount),
-      };
+      return { ...card, value: valueFor(stats?.employees) };
     }
     if (card.id === "departments") {
-      return { ...card, value: officeCount === null ? "…" : String(officeCount) };
+      return { ...card, value: valueFor(stats?.offices) };
     }
     if (card.id === "properties") {
-      return {
-        ...card,
-        value: propertyCount === null ? "…" : String(propertyCount),
-      };
+      return { ...card, value: valueFor(stats?.properties) };
     }
     if (card.id === "accountabilities") {
-      return {
-        ...card,
-        value:
-          accountabilityCount === null ? "…" : String(accountabilityCount),
-      };
+      return { ...card, value: valueFor(stats?.accountabilities) };
     }
     return card;
   });

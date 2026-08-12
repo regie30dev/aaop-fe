@@ -51,12 +51,6 @@ export async function getOffices(): Promise<DirectoryOffice[]> {
   return res.items.map(toDirectoryOffice);
 }
 
-/** Total number of offices stored in the DB (from the list pagination meta). */
-export async function getOfficeCount(): Promise<number> {
-  const res = await api.get<ListEnvelope<ApiOffice>>("/offices?pageSize=1");
-  return res.pagination?.total ?? res.items.length;
-}
-
 /** Next office number, derived from the highest stored one (e.g. OFC-00002).
  *  Seeds "OFC-00001" when the directory is empty; the prefix + 5-digit width
  *  then carry forward automatically via nextSequentialNo. */

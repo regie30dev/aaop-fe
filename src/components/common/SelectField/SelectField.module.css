@@ -1,0 +1,144 @@
+.root {
+  position: relative;
+  width: 100%;
+}
+
+/* Visually hidden, but present & focusable so browser `required` validation
+   can target it (type="hidden" inputs are excluded from validation). */
+.hiddenInput {
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #c7ccd4;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #2b2f36;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.trigger:disabled {
+  background: #f1f3f7;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.triggerOpen,
+.trigger:focus {
+  outline: none;
+  border-color: #3ca94b;
+  box-shadow: 0 0 0 3px rgba(60, 169, 75, 0.15);
+}
+
+.value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placeholder {
+  color: #93a08f;
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: #6b7280;
+}
+
+.menu {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #c7ccd4;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(20, 32, 59, 0.12);
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eceef2;
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: #6b7280;
+}
+
+.search {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14px;
+  color: #2b2f36;
+  background: transparent;
+}
+
+.search::placeholder {
+  color: #93a08f;
+}
+
+.list {
+  max-height: 240px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.empty {
+  padding: 10px;
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.option {
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #2b2f36;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.optionActive {
+  background: #eef2ff;
+}
+
+.optionSelected {
+  font-weight: 600;
+}
+
+.prefix {
+  color: #2563eb;
+  font-weight: 600;
+}

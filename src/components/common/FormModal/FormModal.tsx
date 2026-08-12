@@ -5,6 +5,7 @@ import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import { useAnimatedClose } from "../../../hooks/useAnimatedClose";
 import { getErrorMessage } from "../../../utils/errors";
 import { Spinner } from "../Spinner/Spinner";
+import { SelectField } from "../SelectField/SelectField";
 import uploadPhoto from "../../../assets/upload-photo.svg";
 import styles from "./FormModal.module.css";
 
@@ -17,7 +18,8 @@ export type FieldType =
   | "number"
   | "date"
   | "file"
-  | "select";
+  | "select"
+  | "textarea";
 
 export interface ModalField {
   name: string;
@@ -27,6 +29,12 @@ export interface ModalField {
   placeholder?: string;
   /** Options for a `select` field. */
   options?: { value: string; label: string }[];
+  /** For a `select` field: show a filter box to search long option lists. */
+  searchable?: boolean;
+  /** Placeholder artwork for a `file` field (defaults to the person icon). */
+  image?: string;
+  /** Render read-only (e.g. contextual info that the BE won't accept changes to). */
+  disabled?: boolean;
 }
 
 /** A read-only, system-generated field shown first (e.g. Employee No / Office No). */
@@ -98,8 +106,9 @@ function PhotoField({
   };
 
   // A freshly-picked file wins; otherwise show the existing (edit) photo, else
-  // the placeholder. Only `preview` is an object URL that needs revoking.
+  // the field's placeholder artwork. Only `preview` is an object URL to revoke.
   const shownPhoto = preview ?? (initialUrl || null);
+  const placeholder = field.image ?? uploadPhoto;
 
   return (
     <div className={styles.fileField}>
@@ -112,7 +121,7 @@ function PhotoField({
       >
         <img
           className={`${styles.photo} ${shownPhoto ? styles.photoFilled : ""}`}
-          src={shownPhoto ?? uploadPhoto}
+          src={shownPhoto ?? placeholder}
           alt={shownPhoto ? "Selected photo" : field.label}
         />
       </button>
@@ -287,22 +296,27 @@ export function FormModal({
               {field.label}
             </Label>
             {field.type === "select" ? (
-              <select
+              <SelectField
                 id={field.name}
                 name={field.name}
-                className={styles.input}
+                options={field.options ?? []}
+                defaultValue={initial?.[field.name] ?? ""}
+                placeholder={field.placeholder}
+                required={field.required}
+                disabled={field.disabled}
+                searchable={field.searchable}
+              />
+            ) : field.type === "textarea" ? (
+              <textarea
+                id={field.name}
+                name={field.name}
+                className={`${styles.input} ${styles.textarea}`}
+                rows={3}
+                placeholder={field.placeholder}
                 defaultValue={initial?.[field.name] ?? ""}
                 required={field.required}
-              >
-                <option value="" disabled>
-                  {field.placeholder ?? "Select…"}
-                </option>
-                {field.options?.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                disabled={field.disabled}
+              />
             ) : (
               <input
                 id={field.name}
@@ -313,6 +327,7 @@ export function FormModal({
                 placeholder={field.placeholder}
                 defaultValue={initial?.[field.name] ?? ""}
                 required={field.required}
+                disabled={field.disabled}
               />
             )}
           </div>

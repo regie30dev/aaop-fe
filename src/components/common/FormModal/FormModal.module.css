@@ -122,6 +122,12 @@ select.input {
   appearance: auto;
 }
 
+.textarea {
+  min-height: 76px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
 .input:focus {
   outline: none;
   border-color: #3ca94b;

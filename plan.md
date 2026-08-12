@@ -30,4 +30,15 @@ Then, the Actions (column).  So, these are the  titles (labels): (corresponding 
 		- Description -> description
 		- Price -> acquisitionCost
 		- Date Acquired -> acquisitionDate
-		- Condition -> condition 
+		- Condition -> condition
+
+5. Create: For the Accountability Modal - following like the Employee, Office and Property modals and besides a reusable component is now available. Just change the labelling to reflect it as the Accountability option - just with a new wording Create New Accountability. Then, the Actions (column).  So, these are the  titles (labels): (corresponding is the actual fields in the BE)
+
+     - Accountability No. -> accountabilityNo
+		 - Property Name and Description -> propertyNo (as reference) Note: Name and Description must be displayed combined. The property name shall be all capitalized followed by a comma (,) then the description.
+		 - Accountability Issued To -> employeeNo (as reference) Note: The name of the employee is to be displayed.
+		 - Office -> the name of the office is to be displayed based on the employeeNo as reference 
+		 - Date Issued -> dateIssued
+		 - Date Returned -> dateReturned
+		 - Status -> status
+		 - Remarks -> remarks 

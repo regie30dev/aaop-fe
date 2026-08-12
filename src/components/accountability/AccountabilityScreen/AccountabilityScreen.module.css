@@ -126,6 +126,16 @@
   border-bottom: none;
 }
 
+.accountabilityNo {
+  font-weight: 600;
+  color: #475467;
+}
+
+.propertyNo {
+  font-weight: 600;
+  color: #1e40af;
+}
+
 .thumb {
   display: block;
   width: 40px;
@@ -147,31 +157,25 @@
   color: #98a2b3;
 }
 
-.propertyNo {
-  font-weight: 600;
-  color: #475467;
-}
-
 .strong {
   font-weight: 600;
   color: #101828;
 }
 
-.description {
-  max-width: 280px;
+.property {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.remarks {
+  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
   color: #475467;
 }
 
-.price {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  font-weight: 600;
-  color: #101828;
-}
-
-.condition {
+.status {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -179,22 +183,31 @@
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  text-transform: capitalize;
 }
 
-.conditionOk {
+.statusAssigned {
+  background: #e8f0fe;
+  color: #2563eb;
+}
+
+.statusReturned {
   background: #ecfdf3;
   color: #17b26a;
 }
 
-.conditionBad {
+.statusTransferred {
+  background: #fff6e6;
+  color: #b54708;
+}
+
+.statusLost {
   background: #fef3f2;
   color: #f04438;
 }
 
-.conditionNeutral {
-  background: #f2f4f7;
-  color: #475467;
+.statusDamaged {
+  background: #fdf2fa;
+  color: #c11574;
 }
 
 .actions {

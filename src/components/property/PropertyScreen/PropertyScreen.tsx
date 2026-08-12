@@ -1,4 +1,11 @@
-import { ChevronsUpDown, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import {
+  ChevronsUpDown,
+  Package,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { DirectoryProperty, NewProperty } from "../../../types";
 import {
@@ -10,10 +17,12 @@ import {
   updateProperty,
 } from "../../../services/properties";
 import type { PropertyFormValues } from "../../../services/properties";
+import { uploadImage } from "../../../services/uploads";
 import { FormModal } from "../../common/FormModal/FormModal";
 import type { ModalField } from "../../common/FormModal/FormModal";
 import { ConfirmDialog } from "../../common/ConfirmDialog/ConfirmDialog";
 import { getErrorMessage } from "../../../utils/errors";
+import uploadProperty from "../../../assets/upload-property.svg";
 import styles from "./PropertyScreen.module.css";
 
 const columns = [
@@ -41,6 +50,7 @@ const PROPERTY_FIELDS: ModalField[] = [
   {
     name: "description",
     label: "Description",
+    type: "textarea",
     required: true,
     placeholder: "Enter Description",
   },
@@ -65,6 +75,12 @@ const PROPERTY_FIELDS: ModalField[] = [
       { value: "SERVICEABLE", label: "Serviceable" },
       { value: "UNSERVICEABLE", label: "Unserviceable" },
     ],
+  },
+  {
+    name: "imageUrl",
+    label: "Upload Photo",
+    type: "file",
+    image: uploadProperty,
   },
 ];
 
@@ -132,6 +148,10 @@ export function PropertyScreen() {
       acquisitionCost: Number(values.acquisitionCost),
       acquisitionDate: values.acquisitionDate || undefined,
       condition: values.condition || undefined,
+      // FormModal uploads a newly-picked photo and returns its URL under this key.
+      // When editing without picking a new one it's absent, so the payload omits
+      // imageUrl and the stored photo is left unchanged.
+      imageUrl: values.imageUrl || undefined,
     };
     if (form?.mode === "edit") {
       await updateProperty(form.id, payload);
@@ -170,6 +190,9 @@ export function PropertyScreen() {
         <table className={styles.table}>
           <thead>
             <tr>
+              <th>
+                <span className={styles.th}>Photo</span>
+              </th>
               {columns.map((column) => (
                 <th key={column}>
                   <span className={styles.th}>
@@ -184,7 +207,7 @@ export function PropertyScreen() {
           <tbody>
             {loading && (
               <tr>
-                <td className={styles.stateCell} colSpan={columns.length + 1}>
+                <td className={styles.stateCell} colSpan={columns.length + 2}>
                   Loading properties…
                 </td>
               </tr>
@@ -193,7 +216,7 @@ export function PropertyScreen() {
               <tr>
                 <td
                   className={`${styles.stateCell} ${styles.stateError}`}
-                  colSpan={columns.length + 1}
+                  colSpan={columns.length + 2}
                 >
                   {error}
                 </td>
@@ -201,7 +224,7 @@ export function PropertyScreen() {
             )}
             {!loading && !error && properties.length === 0 && (
               <tr>
-                <td className={styles.stateCell} colSpan={columns.length + 1}>
+                <td className={styles.stateCell} colSpan={columns.length + 2}>
                   No properties yet. Add the first one.
                 </td>
               </tr>
@@ -210,6 +233,22 @@ export function PropertyScreen() {
               !error &&
               properties.map((row) => (
                 <tr key={row.id}>
+                  <td>
+                    {row.image ? (
+                      <img
+                        className={styles.thumb}
+                        src={row.image}
+                        alt={row.propertyName}
+                      />
+                    ) : (
+                      <span
+                        className={styles.thumbPlaceholder}
+                        aria-label="No photo"
+                      >
+                        <Package size={18} />
+                      </span>
+                    )}
+                  </td>
                   <td className={styles.propertyNo}>{row.propertyNo}</td>
                   <td>{row.category}</td>
                   <td className={styles.strong}>{row.propertyName}</td>
@@ -261,7 +300,7 @@ export function PropertyScreen() {
           title={form.mode === "edit" ? "Edit Property" : "Add New Property"}
           generated={{
             name: "propertyNo",
-            label: "Property No.",
+            label: "Prop No.",
             value:
               form.mode === "edit"
                 ? form.values.propertyNo
@@ -276,6 +315,7 @@ export function PropertyScreen() {
           submitLabel={form.mode === "edit" ? "Update" : "Save"}
           onClose={() => setForm(null)}
           onSubmit={handleSubmit}
+          uploadFile={uploadImage}
         />
       )}
 

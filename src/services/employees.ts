@@ -75,12 +75,6 @@ export async function getDirectoryEmployees(): Promise<DirectoryEmployee[]> {
   return res.items.map(toDirectoryEmployee);
 }
 
-/** Total number of employees stored in the DB (from the list pagination meta). */
-export async function getEmployeeCount(): Promise<number> {
-  const res = await api.get<ListEnvelope<ApiEmployee>>("/employees?pageSize=1");
-  return res.pagination?.total ?? res.items.length;
-}
-
 /**
  * Next employee number, derived from the highest numeric value among the rows
  * currently STORED in the DB — not from any mock/count. Prefix + zero-padding

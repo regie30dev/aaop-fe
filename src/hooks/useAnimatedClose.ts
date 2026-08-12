@@ -21,13 +21,22 @@ export function useAnimatedClose(
 ) {
   const [closing, setClosing] = useState(false);
   const closingRef = useRef(false);
+  const timerRef = useRef<number | undefined>(undefined);
 
   const close = () => {
     if (closingRef.current) return;
     closingRef.current = true;
     setClosing(true);
-    window.setTimeout(onClose, exitMs);
+    timerRef.current = window.setTimeout(onClose, exitMs);
   };
+
+  // Clear a pending exit timer if the surface unmounts mid-animation, so the
+  // stale `onClose` can't fire on an already-unmounted tree.
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== undefined) window.clearTimeout(timerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (opts?.closeOnEscape === false) return;

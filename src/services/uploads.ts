@@ -1,4 +1,5 @@
 import { BASE_URL } from "../api/client";
+import { downscaleImage } from "../utils/downscaleImage";
 
 /**
  * Upload an image file to the backend (POST /uploads), which stores it in
@@ -9,8 +10,12 @@ import { BASE_URL } from "../api/client";
  * the correct multipart/form-data boundary for the FormData body.
  */
 export async function uploadImage(file: File): Promise<string> {
+  // Downscale/compress large images in the browser before upload (keeps them
+  // under the server + Cloudinary size limits). Small images pass through as-is.
+  const prepared = await downscaleImage(file);
+
   const form = new FormData();
-  form.append("file", file);
+  form.append("file", prepared);
 
   let res: Response;
   try {

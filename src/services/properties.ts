@@ -20,6 +20,7 @@ interface ApiProperty {
   acquisitionCost: string | number;
   acquisitionDate?: string | null;
   condition: string;
+  imageUrl?: string | null;
 }
 
 /** Editable fields used to pre-fill the form when editing a property. */
@@ -31,6 +32,8 @@ export interface PropertyFormValues {
   acquisitionCost: string;
   acquisitionDate: string;
   condition: string;
+  /** Current hosted photo URL, so the edit form can preview it. */
+  imageUrl: string;
 }
 
 const priceFormatter = new Intl.NumberFormat("en-US", {
@@ -67,6 +70,7 @@ function toDirectoryProperty(p: ApiProperty): DirectoryProperty {
   return {
     id: p.id,
     propertyNo: p.propertyNo,
+    image: p.imageUrl ?? "",
     category: p.category ?? "—",
     propertyName: p.propertyName,
     description: p.description,
@@ -85,6 +89,7 @@ function toMutablePayload(input: NewProperty): Record<string, unknown> {
   if (input.category) payload.category = input.category;
   if (input.acquisitionDate) payload.acquisitionDate = input.acquisitionDate;
   if (input.condition) payload.condition = input.condition;
+  if (input.imageUrl) payload.imageUrl = input.imageUrl;
   return payload;
 }
 
@@ -93,12 +98,6 @@ export async function getProperties(): Promise<DirectoryProperty[]> {
     "/properties?pageSize=100",
   );
   return res.items.map(toDirectoryProperty);
-}
-
-/** Total number of properties stored in the DB (from the list pagination meta). */
-export async function getPropertyCount(): Promise<number> {
-  const res = await api.get<ListEnvelope<ApiProperty>>("/properties?pageSize=1");
-  return res.pagination?.total ?? res.items.length;
 }
 
 /** Next property number, derived from the highest stored one (e.g. PRP-00002).
@@ -123,6 +122,7 @@ export async function getProperty(id: string): Promise<PropertyFormValues> {
       p.acquisitionCost == null ? "" : String(p.acquisitionCost),
     acquisitionDate: toDateInput(p.acquisitionDate),
     condition: p.condition ?? "",
+    imageUrl: p.imageUrl ?? "",
   };
 }
 

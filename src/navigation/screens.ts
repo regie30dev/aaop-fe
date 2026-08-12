@@ -9,6 +9,7 @@ import {
 import { EmployeeScreen } from "../components/employee/EmployeeScreen/EmployeeScreen";
 import { OfficeScreen } from "../components/office/OfficeScreen/OfficeScreen";
 import { PropertyScreen } from "../components/property/PropertyScreen/PropertyScreen";
+import { AccountabilityScreen } from "../components/accountability/AccountabilityScreen/AccountabilityScreen";
 
 export type ScreenId =
   | "dashboard"
@@ -38,6 +39,7 @@ export const SCREENS: Record<ScreenId, ScreenConfig> = {
     id: "accountability",
     label: "Accountability",
     icon: Wrench,
+    overlay: AccountabilityScreen,
   },
   property: {
     id: "property",
