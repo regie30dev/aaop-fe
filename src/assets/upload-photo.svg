@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 224" width="200" height="224" role="img" aria-label="Upload your photo">
+  <defs>
+    <linearGradient id="up-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e8f0fe"/>
+    </linearGradient>
+    <linearGradient id="up-avatar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="up-badge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f87171"/>
+      <stop offset="1" stop-color="#dc2626"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Frame -->
+  <rect x="8" y="6" width="184" height="184" rx="20"
+        fill="url(#up-bg)" stroke="#2563eb" stroke-width="3"/>
+
+  <!-- Avatar clipped to the frame so shoulders sit flush at the bottom edge -->
+  <clipPath id="up-clip">
+    <rect x="8" y="6" width="184" height="184" rx="20"/>
+  </clipPath>
+  <g clip-path="url(#up-clip)">
+    <path d="M44 168 C44 123 60 86 100 86 C140 86 156 123 156 168 Z" fill="url(#up-avatar)"/>
+    <circle cx="100" cy="60" r="30" fill="url(#up-avatar)"/>
+  </g>
+
+  <!-- Red "add" badge -->
+  <circle cx="150" cy="104" r="20" fill="url(#up-badge)" stroke="#ffffff" stroke-width="3"/>
+  <rect x="140" y="101.5" width="20" height="5" rx="2.5" fill="#ffffff"/>
+  <rect x="147.5" y="94" width="5" height="20" rx="2.5" fill="#ffffff"/>
+
+  <!-- Caption -->
+  <text x="100" y="214" text-anchor="middle"
+        font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="20" font-weight="600" fill="#2563eb">Upload your photo</text>
+</svg>

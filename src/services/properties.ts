@@ -13,7 +13,7 @@ import type { DirectoryProperty, NewProperty } from "../types";
 interface ApiProperty {
   id: string;
   propertyNo: string;
-  propertyName?: string | null;
+  propertyName: string;
   description: string;
   category?: string | null;
   // Prisma Decimal serializes to a string over JSON (e.g. "1500.00").
@@ -68,7 +68,7 @@ function toDirectoryProperty(p: ApiProperty): DirectoryProperty {
     id: p.id,
     propertyNo: p.propertyNo,
     category: p.category ?? "—",
-    propertyName: p.propertyName ?? "—",
+    propertyName: p.propertyName,
     description: p.description,
     price: formatPrice(p.acquisitionCost),
     dateAcquired: formatDate(p.acquisitionDate),
@@ -78,11 +78,11 @@ function toDirectoryProperty(p: ApiProperty): DirectoryProperty {
 
 function toMutablePayload(input: NewProperty): Record<string, unknown> {
   const payload: Record<string, unknown> = {
+    propertyName: input.propertyName,
     description: input.description,
     acquisitionCost: input.acquisitionCost,
   };
   if (input.category) payload.category = input.category;
-  if (input.propertyName) payload.propertyName = input.propertyName;
   if (input.acquisitionDate) payload.acquisitionDate = input.acquisitionDate;
   if (input.condition) payload.condition = input.condition;
   return payload;
@@ -117,7 +117,7 @@ export async function getProperty(id: string): Promise<PropertyFormValues> {
   return {
     propertyNo: p.propertyNo,
     category: p.category ?? "",
-    propertyName: p.propertyName ?? "",
+    propertyName: p.propertyName,
     description: p.description ?? "",
     acquisitionCost:
       p.acquisitionCost == null ? "" : String(p.acquisitionCost),

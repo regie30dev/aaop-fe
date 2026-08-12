@@ -1,10 +1,11 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { FormEvent, ReactNode } from "react";
+import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import { useAnimatedClose } from "../../../hooks/useAnimatedClose";
 import { getErrorMessage } from "../../../utils/errors";
 import { Spinner } from "../Spinner/Spinner";
+import uploadPhoto from "../../../assets/upload-photo.svg";
 import styles from "./FormModal.module.css";
 
 // Keep in sync with the exit animation duration in FormModal.module.css.
@@ -44,6 +45,12 @@ interface FormModalProps {
   pendingLabel?: string;
   onClose: () => void;
   onSubmit: (values: Record<string, string>) => void | Promise<void>;
+  /**
+   * Optional uploader for `file` fields. When provided, a picked file is
+   * uploaded on submit and its returned URL is passed to `onSubmit` as the
+   * field's string value (e.g. values.picture = "https://…").
+   */
+  uploadFile?: (file: File) => Promise<string>;
 }
 
 function Label({
@@ -64,6 +71,65 @@ function Label({
 }
 
 /**
+ * Clickable photo uploader: shows the "Upload your photo" placeholder until an
+ * image is picked, then previews the selection. Clicking the image opens the
+ * native file picker (the real input is kept hidden). Pinned to the modal's
+ * upper-right corner by the caller.
+ */
+function PhotoField({
+  field,
+  initialUrl,
+}: {
+  field: ModalField;
+  initialUrl?: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  // Free the object URL when the preview changes or the modal unmounts.
+  useEffect(() => {
+    if (!preview) return;
+    return () => URL.revokeObjectURL(preview);
+  }, [preview]);
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    setPreview(file ? URL.createObjectURL(file) : null);
+  };
+
+  // A freshly-picked file wins; otherwise show the existing (edit) photo, else
+  // the placeholder. Only `preview` is an object URL that needs revoking.
+  const shownPhoto = preview ?? (initialUrl || null);
+
+  return (
+    <div className={styles.fileField}>
+      <button
+        type="button"
+        className={styles.photoButton}
+        onClick={() => inputRef.current?.click()}
+        aria-label={field.label}
+        title={field.label}
+      >
+        <img
+          className={`${styles.photo} ${shownPhoto ? styles.photoFilled : ""}`}
+          src={shownPhoto ?? uploadPhoto}
+          alt={shownPhoto ? "Selected photo" : field.label}
+        />
+      </button>
+      <input
+        ref={inputRef}
+        id={field.name}
+        name={field.name}
+        className={styles.hiddenFile}
+        type="file"
+        accept="image/*"
+        onChange={handleChange}
+      />
+    </div>
+  );
+}
+
+/**
  * Generic, reusable form modal driven by a field config. Owns all the modal
  * chrome (portal, animated open/close, focus trap, scroll lock, spinner,
  * inline errors); callers supply the fields and an async `onSubmit`.
@@ -77,6 +143,7 @@ export function FormModal({
   pendingLabel = "Saving…",
   onClose,
   onSubmit,
+  uploadFile,
 }: FormModalProps) {
   // Dismiss only via the explicit X (no outside-click, no Escape).
   const { closing, close: handleClose } = useAnimatedClose(
@@ -89,12 +156,18 @@ export function FormModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // File fields (e.g. Upload Picture) are pinned to the modal's upper-right
+  // corner; everything else flows down the form in order.
+  const fileFields = fields.filter((field) => field.type === "file");
+  const flowFields = fields.filter((field) => field.type !== "file");
+
   // Lock background scroll and focus the first editable field.
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const firstField =
-      formRef.current?.querySelector<HTMLElement>("input:not([disabled])");
+    const firstField = formRef.current?.querySelector<HTMLElement>(
+      "input:not([disabled]):not([type='file'])",
+    );
     firstField?.focus();
     return () => {
       document.body.style.overflow = previousOverflow;
@@ -128,12 +201,21 @@ export function FormModal({
     const values: Record<string, string> = {};
     if (generated) values[generated.name] = generated.value;
     for (const field of fields) {
-      if (field.type === "file") continue; // files are not collected/persisted
+      if (field.type === "file") continue; // handled separately below
       values[field.name] = String(data.get(field.name) ?? "");
     }
     setError(null);
     setSubmitting(true);
     try {
+      // Upload any picked file(s) first; pass each resulting URL as the field value.
+      if (uploadFile) {
+        for (const field of fileFields) {
+          const picked = data.get(field.name);
+          if (picked instanceof File && picked.size > 0) {
+            values[field.name] = await uploadFile(picked);
+          }
+        }
+      }
       await onSubmit(values);
       handleClose();
     } catch (err) {
@@ -143,6 +225,20 @@ export function FormModal({
   };
 
   const titleId = "form-modal-title";
+
+  const generatedField = generated ? (
+    <div className={styles.field}>
+      <Label htmlFor={generated.name}>{generated.label}</Label>
+      <input
+        id={generated.name}
+        name={generated.name}
+        className={styles.input}
+        type="text"
+        value={generated.value}
+        disabled
+      />
+    </div>
+  ) : null;
 
   return createPortal(
     <div className={`${styles.backdrop} ${closing ? styles.backdropClosing : ""}`}>
@@ -168,34 +264,29 @@ export function FormModal({
           {title}
         </h2>
 
-        {generated && (
-          <div className={styles.field}>
-            <Label htmlFor={generated.name}>{generated.label}</Label>
-            <input
-              id={generated.name}
-              name={generated.name}
-              className={styles.input}
-              type="text"
-              value={generated.value}
-              disabled
-            />
+        {fileFields.length > 0 ? (
+          <div className={styles.topRow}>
+            <div className={styles.topRowMain}>{generatedField}</div>
+            <div className={styles.fileCorner}>
+              {fileFields.map((field) => (
+                <PhotoField
+                  key={field.name}
+                  field={field}
+                  initialUrl={initial?.[field.name]}
+                />
+              ))}
+            </div>
           </div>
+        ) : (
+          generatedField
         )}
 
-        {fields.map((field) => (
+        {flowFields.map((field) => (
           <div className={styles.field} key={field.name}>
             <Label htmlFor={field.name} required={field.required}>
               {field.label}
             </Label>
-            {field.type === "file" ? (
-              <input
-                id={field.name}
-                name={field.name}
-                className={styles.file}
-                type="file"
-                accept="image/*"
-              />
-            ) : field.type === "select" ? (
+            {field.type === "select" ? (
               <select
                 id={field.name}
                 name={field.name}

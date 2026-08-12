@@ -2,6 +2,7 @@ import { BASE_URL } from "../api/client";
 import { emitEmployeesChanged } from "./employeeEvents";
 import { emitOfficesChanged } from "./officeEvents";
 import { emitPropertiesChanged } from "./propertyEvents";
+import { emitAccountabilitiesChanged } from "./accountabilityEvents";
 
 /**
  * Realtime client: subscribes to the backend's Server-Sent Events stream
@@ -25,6 +26,9 @@ export function connectRealtime(): () => void {
   source.addEventListener("employees.changed", () => emitEmployeesChanged());
   source.addEventListener("offices.changed", () => emitOfficesChanged());
   source.addEventListener("properties.changed", () => emitPropertiesChanged());
+  source.addEventListener("accountabilities.changed", () =>
+    emitAccountabilitiesChanged(),
+  );
 
   return () => {
     source?.close();

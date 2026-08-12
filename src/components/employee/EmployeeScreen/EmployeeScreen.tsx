@@ -25,6 +25,7 @@ import {
   updateEmployee,
 } from "../../../services/employees";
 import type { EmployeeFormValues } from "../../../services/employees";
+import { uploadImage } from "../../../services/uploads";
 import { getOffices } from "../../../services/offices";
 import { FormModal } from "../../common/FormModal/FormModal";
 import type { ModalField } from "../../common/FormModal/FormModal";
@@ -51,7 +52,7 @@ function employeeFields(
       options: officeOptions,
     },
     { name: "email", label: "Email", type: "email", placeholder: "Enter Email" },
-    { name: "picture", label: "Upload Picture", type: "file" },
+    { name: "imageUrl", label: "Upload Picture", type: "file" },
   ];
 }
 
@@ -156,6 +157,10 @@ export function EmployeeScreen() {
       position: values.position,
       officeNo: values.officeNo,
       email: values.email || undefined,
+      // FormModal uploads a newly-picked photo and returns its URL under this key.
+      // When editing without picking a new one it's absent, so the payload omits
+      // imageUrl and the stored photo is left unchanged.
+      imageUrl: values.imageUrl || undefined,
     };
     if (form?.mode === "edit") {
       await updateEmployee(form.id, payload);
@@ -321,6 +326,7 @@ export function EmployeeScreen() {
           submitLabel={form.mode === "edit" ? "Update" : "Save"}
           onClose={() => setForm(null)}
           onSubmit={handleSubmit}
+          uploadFile={uploadImage}
         />
       )}
 

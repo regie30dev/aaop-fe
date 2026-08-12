@@ -22,6 +22,7 @@ interface ApiEmployee {
   office?: { officeNo: string; officeName: string } | null;
   dateOfBirth?: string | null;
   email?: string | null;
+  imageUrl?: string | null;
   isActive: boolean;
 }
 
@@ -61,7 +62,10 @@ function toDirectoryEmployee(e: ApiEmployee): DirectoryEmployee {
     departmentColor: officeColor(officeName),
     role: e.position ?? "—",
     status: e.isActive ? "Active" : "Inactive",
-    avatar: `https://i.pravatar.cc/64?u=${encodeURIComponent(e.employeeNo)}`,
+    // Use the uploaded photo when present; otherwise a deterministic placeholder.
+    avatar:
+      e.imageUrl ??
+      `https://i.pravatar.cc/64?u=${encodeURIComponent(e.employeeNo)}`,
   };
 }
 
@@ -99,6 +103,8 @@ export interface EmployeeFormValues {
   position: string;
   officeNo: string;
   email: string;
+  /** Current hosted photo URL, so the edit form can preview it. */
+  imageUrl: string;
 }
 
 // Build the mutable field payload, sending optionals only when present
@@ -113,6 +119,7 @@ function toMutablePayload(input: NewEmployee): Record<string, unknown> {
   if (input.officeNo) payload.officeNo = input.officeNo;
   if (input.dateOfBirth) payload.dateOfBirth = input.dateOfBirth;
   if (input.email) payload.email = input.email;
+  if (input.imageUrl) payload.imageUrl = input.imageUrl;
   return payload;
 }
 
@@ -138,6 +145,7 @@ export async function getEmployee(id: string): Promise<EmployeeFormValues> {
     position: e.position ?? "",
     officeNo: e.officeNo ?? "",
     email: e.email ?? "",
+    imageUrl: e.imageUrl ?? "",
   };
 }
 

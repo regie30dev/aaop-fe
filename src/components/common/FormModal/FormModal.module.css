@@ -23,10 +23,29 @@
   background: #ffffff;
   border-radius: 10px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: 30px 30px 34px;
+  padding: 24px 30px 26px;
   transform-origin: top center;
   will-change: transform, opacity;
   animation: formPop 0.44s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+/* Read-only "No." field paired with the photo on one row (ID-card header),
+   so the upload square doesn't add its own tall block to the modal height. */
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 9px;
+}
+
+.topRowMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.topRowMain .field,
+.topRow .fileCorner {
+  margin-bottom: 0;
 }
 
 .close {
@@ -53,7 +72,7 @@
 }
 
 .title {
-  margin: 0 0 22px;
+  margin: 0 0 16px;
   text-align: center;
   font-size: 22px;
   font-weight: 700;
@@ -61,7 +80,7 @@
 }
 
 .field {
-  margin-bottom: 11px;
+  margin-bottom: 9px;
 }
 
 .label {
@@ -109,9 +128,55 @@ select.input {
   box-shadow: 0 0 0 3px rgba(60, 169, 75, 0.15);
 }
 
-.file {
-  font-size: 14px;
-  color: #2b2f36;
+/* Upload Picture (and any file field) pinned to the modal's upper-right. */
+.fileCorner {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.fileField {
+  display: flex;
+}
+
+/* Clickable square that opens the file picker. */
+.photoButton {
+  display: block;
+  width: 104px;
+  height: 104px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.photoButton:hover {
+  opacity: 0.85;
+}
+
+.photoButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.photo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* A chosen photo fills the square frame instead of letterboxing. */
+.photoFilled {
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.hiddenFile {
+  display: none;
 }
 
 .error {
@@ -128,7 +193,7 @@ select.input {
   display: flex;
   gap: 16px;
   justify-content: flex-end;
-  margin-top: 22px;
+  margin-top: 16px;
 }
 
 .cancel,

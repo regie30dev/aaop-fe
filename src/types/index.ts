@@ -95,7 +95,7 @@ export interface DirectoryProperty {
 export interface NewProperty {
   propertyNo: string;
   category?: string;
-  propertyName?: string;
+  propertyName: string;
   description: string;
   acquisitionCost: number;
   acquisitionDate?: string;
@@ -112,5 +112,6 @@ export interface NewEmployee {
   position: string;
   officeNo: string;
   email?: string;
-  picture?: File | null;
+  /** Hosted image URL (from the upload endpoint), stored on the employee. */
+  imageUrl?: string;
 }

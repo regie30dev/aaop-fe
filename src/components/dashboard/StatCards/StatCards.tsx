@@ -14,6 +14,10 @@ import { getEmployeeCount } from "../../../services/employees";
 import { onEmployeesChanged } from "../../../services/employeeEvents";
 import { getOfficeCount } from "../../../services/offices";
 import { onOfficesChanged } from "../../../services/officeEvents";
+import { getPropertyCount } from "../../../services/properties";
+import { onPropertiesChanged } from "../../../services/propertyEvents";
+import { getAccountabilityCount } from "../../../services/accountabilities";
+import { onAccountabilitiesChanged } from "../../../services/accountabilityEvents";
 import styles from "./StatCards.module.css";
 
 const icons: Record<StatCardType["icon"], ComponentType<{ size?: number }>> = {
@@ -53,6 +57,10 @@ function StatCard({ card }: { card: StatCardType }) {
 export function StatCards() {
   const [employeeCount, setEmployeeCount] = useState<number | null>(null);
   const [officeCount, setOfficeCount] = useState<number | null>(null);
+  const [propertyCount, setPropertyCount] = useState<number | null>(null);
+  const [accountabilityCount, setAccountabilityCount] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     let active = true;
@@ -77,15 +85,43 @@ export function StatCards() {
         });
     };
 
+    const refreshProperties = () => {
+      getPropertyCount()
+        .then((count) => {
+          if (active) setPropertyCount(count);
+        })
+        .catch(() => {
+          /* leave the placeholder if the count can't be fetched */
+        });
+    };
+
+    const refreshAccountabilities = () => {
+      getAccountabilityCount()
+        .then((count) => {
+          if (active) setAccountabilityCount(count);
+        })
+        .catch(() => {
+          /* leave the placeholder if the count can't be fetched */
+        });
+    };
+
     refreshEmployees();
     refreshOffices();
+    refreshProperties();
+    refreshAccountabilities();
     const unsubEmployees = onEmployeesChanged(refreshEmployees);
     const unsubOffices = onOfficesChanged(refreshOffices);
+    const unsubProperties = onPropertiesChanged(refreshProperties);
+    const unsubAccountabilities = onAccountabilitiesChanged(
+      refreshAccountabilities,
+    );
 
     return () => {
       active = false;
       unsubEmployees();
       unsubOffices();
+      unsubProperties();
+      unsubAccountabilities();
     };
   }, []);
 
@@ -98,6 +134,19 @@ export function StatCards() {
     }
     if (card.id === "departments") {
       return { ...card, value: officeCount === null ? "…" : String(officeCount) };
+    }
+    if (card.id === "properties") {
+      return {
+        ...card,
+        value: propertyCount === null ? "…" : String(propertyCount),
+      };
+    }
+    if (card.id === "accountabilities") {
+      return {
+        ...card,
+        value:
+          accountabilityCount === null ? "…" : String(accountabilityCount),
+      };
     }
     return card;
   });

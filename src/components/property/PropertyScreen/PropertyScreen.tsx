@@ -35,6 +35,7 @@ const PROPERTY_FIELDS: ModalField[] = [
   {
     name: "propertyName",
     label: "Property Name",
+    required: true,
     placeholder: "Enter Property Name",
   },
   {
@@ -126,7 +127,7 @@ export function PropertyScreen() {
     const payload: NewProperty = {
       propertyNo: values.propertyNo,
       category: values.category || undefined,
-      propertyName: values.propertyName || undefined,
+      propertyName: values.propertyName,
       description: values.description,
       acquisitionCost: Number(values.acquisitionCost),
       acquisitionDate: values.acquisitionDate || undefined,
