@@ -1,6 +1,7 @@
 import { api, BASE_URL } from "../api/client";
 import type { ItemEnvelope, ListEnvelope } from "../api/client";
 import { emitAccountabilitiesChanged } from "./accountabilityEvents";
+import { composeFullName } from "../utils/names";
 import type {
   AccountabilityStatus,
   DirectoryAccountability,
@@ -87,8 +88,7 @@ function toDateInput(iso?: string | null): string {
 
 function employeeName(e?: ApiEmployeeRef | null): string {
   if (!e) return "—";
-  const name = [e.firstName, e.middleName, e.lastName].filter(Boolean).join(" ");
-  return name || "—";
+  return composeFullName(e) || "—";
 }
 
 /** "PROPERTY NAME, description" — name upper-cased, per spec. */
@@ -107,6 +107,7 @@ function toDirectoryAccountability(a: ApiAccountability): DirectoryAccountabilit
     qty: a.qty ?? 1,
     unit: a.unit ?? "",
     issuedTo: employeeName(a.employee),
+    employeeNo: a.employeeNo,
     office: a.employee?.office?.officeName ?? "—",
     dateIssued: formatDate(a.dateIssued),
     dateReturned: formatDate(a.dateReturned),

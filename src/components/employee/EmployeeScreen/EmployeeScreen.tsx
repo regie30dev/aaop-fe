@@ -331,6 +331,9 @@ export function EmployeeScreen() {
         <table className={styles.table}>
           <thead>
             <tr>
+              <th>
+                <span className={styles.th}>No.</span>
+              </th>
               {columns.map((column) => (
                 <th key={column}>
                   <span className={styles.th}>
@@ -345,8 +348,11 @@ export function EmployeeScreen() {
           <tbody>
             {loading && (
               <tr>
-                <td className={styles.stateCell} colSpan={columns.length + 1}>
-                  Loading employees…
+                <td className={styles.stateCell} colSpan={columns.length + 2}>
+                  <span className={styles.loadingState}>
+                    <Spinner size={18} />
+                    Loading employees…
+                  </span>
                 </td>
               </tr>
             )}
@@ -354,7 +360,7 @@ export function EmployeeScreen() {
               <tr>
                 <td
                   className={`${styles.stateCell} ${styles.stateError}`}
-                  colSpan={columns.length + 1}
+                  colSpan={columns.length + 2}
                 >
                   {error}
                 </td>
@@ -362,7 +368,7 @@ export function EmployeeScreen() {
             )}
             {!loading && !error && visibleEmployees.length === 0 && (
               <tr>
-                <td className={styles.stateCell} colSpan={columns.length + 1}>
+                <td className={styles.stateCell} colSpan={columns.length + 2}>
                   {matchIds !== null
                     ? "No employees match your search."
                     : "No employees yet. Add the first one."}
@@ -371,10 +377,11 @@ export function EmployeeScreen() {
             )}
             {!loading &&
               !error &&
-              pageEmployees.map((row) => {
+              pageEmployees.map((row, index) => {
               const StatusIcon = statusIcon[row.status];
               return (
                 <tr key={row.id}>
+                  <td className={styles.rowNo}>{pageStart + index + 1}.</td>
                   <td className={styles.employeeNo}>{row.employeeNo}</td>
                   <td>
                     <div className={styles.person}>
@@ -455,7 +462,7 @@ export function EmployeeScreen() {
                     className={styles.fillerRow}
                     aria-hidden="true"
                   >
-                    <td colSpan={columns.length + 1}>&nbsp;</td>
+                    <td colSpan={columns.length + 2}>&nbsp;</td>
                   </tr>
                 ),
               )}

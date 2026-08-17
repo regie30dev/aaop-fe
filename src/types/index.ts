@@ -129,6 +129,8 @@ export interface DirectoryAccountability {
   unit: string;
   /** Full name of the employee the item is issued to. */
   issuedTo: string;
+  /** The issued-to employee's number (used to look up their avatar). */
+  employeeNo: string;
   /** Name of that employee's office. */
   office: string;
   /** Pre-formatted for display. */

@@ -427,7 +427,10 @@ export function PropertyScreen() {
             {loading && (
               <tr>
                 <td className={styles.stateCell} colSpan={columns.length + 3}>
-                  Loading properties…
+                  <span className={styles.loadingState}>
+                    <Spinner size={18} />
+                    Loading properties…
+                  </span>
                 </td>
               </tr>
             )}

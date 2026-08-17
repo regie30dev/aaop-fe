@@ -2,6 +2,7 @@ import { api } from "../api/client";
 import type { ItemEnvelope, ListEnvelope } from "../api/client";
 import { nextSequentialNo } from "./sequence";
 import { emitEmployeesChanged } from "./employeeEvents";
+import { composeFullName } from "../utils/names";
 import type { DirectoryEmployee, MailStatus, NewEmployee } from "../types";
 
 /**
@@ -45,7 +46,7 @@ function officeColor(office: string): string {
 }
 
 function fullName(e: ApiEmployee): string {
-  return [e.firstName, e.middleName, e.lastName].filter(Boolean).join(" ");
+  return composeFullName(e);
 }
 
 /** Map a backend Employee onto the directory table's view-model. */

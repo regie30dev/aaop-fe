@@ -436,6 +436,14 @@
   color: #667085;
 }
 
+/* Loading row: spinner + label, centered and in the app's primary blue. */
+.loadingState {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-primary);
+}
+
 .stateError {
   color: #f04438;
 }

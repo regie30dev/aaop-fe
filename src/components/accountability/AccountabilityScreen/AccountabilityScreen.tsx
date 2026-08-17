@@ -7,6 +7,7 @@ import {
   Plus,
   Search,
   Trash2,
+  User,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -73,6 +74,7 @@ const columns = [
   "Unit",
   "Prop No.",
   "Name and Description",
+  "Price",
   "Issued To",
   "Office",
   "Status",
@@ -213,6 +215,11 @@ export function AccountabilityScreen() {
   const [activeEmployeeNos, setActiveEmployeeNos] = useState<Set<string>>(
     new Set(),
   );
+  // Employee avatar (uploaded photo or fallback) keyed by employeeNo, for the
+  // small inset photo in the "Issued To" column.
+  const [avatarByEmployeeNo, setAvatarByEmployeeNo] = useState<
+    Record<string, string>
+  >({});
   // Property acquisition cost keyed by propertyNo — the report's "Cost" column
   // (the accountability records themselves don't carry cost).
   const [priceByPropertyNo, setPriceByPropertyNo] = useState<
@@ -297,6 +304,9 @@ export function AccountabilityScreen() {
             .filter((e) => e.status === "Active")
             .map((e) => e.employeeNo),
         ),
+      );
+      setAvatarByEmployeeNo(
+        Object.fromEntries(employees.map((e) => [e.employeeNo, e.avatar])),
       );
       setPropertyOptions(
         properties.map((p) => ({
@@ -590,7 +600,10 @@ export function AccountabilityScreen() {
             {loading && (
               <tr>
                 <td className={styles.stateCell} colSpan={columns.length + 2}>
-                  Loading accountabilities…
+                  <span className={styles.loadingState}>
+                    <Spinner size={18} />
+                    Loading accountabilities…
+                  </span>
                 </td>
               </tr>
             )}
@@ -645,7 +658,28 @@ export function AccountabilityScreen() {
                       {row.property}
                     </div>
                   </td>
-                  <td className={styles.strong}>{row.issuedTo}</td>
+                  <td className={styles.price}>
+                    {priceByPropertyNo[row.propertyNo] ?? "—"}
+                  </td>
+                  <td className={styles.strong}>
+                    <span className={styles.issuedTo}>
+                      {avatarByEmployeeNo[row.employeeNo] ? (
+                        <img
+                          className={styles.avatar}
+                          src={avatarByEmployeeNo[row.employeeNo]}
+                          alt=""
+                        />
+                      ) : (
+                        <span
+                          className={styles.avatarPlaceholder}
+                          aria-hidden="true"
+                        >
+                          <User size={16} />
+                        </span>
+                      )}
+                      {row.issuedTo}
+                    </span>
+                  </td>
                   <td>{row.office}</td>
                   <td>
                     <span

@@ -276,6 +276,9 @@ export function OfficeScreen() {
         <table className={styles.table}>
           <thead>
             <tr>
+              <th>
+                <span className={styles.th}>No.</span>
+              </th>
               {columns.map((column) => (
                 <th key={column}>
                   <span className={styles.th}>
@@ -290,8 +293,11 @@ export function OfficeScreen() {
           <tbody>
             {loading && (
               <tr>
-                <td className={styles.stateCell} colSpan={columns.length + 1}>
-                  Loading offices…
+                <td className={styles.stateCell} colSpan={columns.length + 2}>
+                  <span className={styles.loadingState}>
+                    <Spinner size={18} />
+                    Loading offices…
+                  </span>
                 </td>
               </tr>
             )}
@@ -299,7 +305,7 @@ export function OfficeScreen() {
               <tr>
                 <td
                   className={`${styles.stateCell} ${styles.stateError}`}
-                  colSpan={columns.length + 1}
+                  colSpan={columns.length + 2}
                 >
                   {error}
                 </td>
@@ -307,7 +313,7 @@ export function OfficeScreen() {
             )}
             {!loading && !error && visibleOffices.length === 0 && (
               <tr>
-                <td className={styles.stateCell} colSpan={columns.length + 1}>
+                <td className={styles.stateCell} colSpan={columns.length + 2}>
                   {matchIds !== null
                     ? "No offices match your search."
                     : "No offices yet. Add the first one."}
@@ -316,10 +322,11 @@ export function OfficeScreen() {
             )}
             {!loading &&
               !error &&
-              pageOffices.map((row) => {
+              pageOffices.map((row, index) => {
                 const StatusIcon = statusIcon[row.status];
                 return (
                   <tr key={row.id}>
+                    <td className={styles.rowNo}>{pageStart + index + 1}.</td>
                     <td className={styles.officeNo}>{row.officeNo}</td>
                     <td className={styles.strong}>{row.officeName}</td>
                     <td>{row.function}</td>
@@ -377,7 +384,7 @@ export function OfficeScreen() {
                     className={styles.fillerRow}
                     aria-hidden="true"
                   >
-                    <td colSpan={columns.length + 1}>&nbsp;</td>
+                    <td colSpan={columns.length + 2}>&nbsp;</td>
                   </tr>
                 ),
               )}
