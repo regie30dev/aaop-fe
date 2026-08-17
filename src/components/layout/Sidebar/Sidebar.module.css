@@ -36,8 +36,8 @@
 }
 
 .brandMark {
-  width: 46px;
-  height: 46px;
+  width: 55px;
+  height: 55px;
   display: grid;
   place-items: center;
 }
@@ -45,14 +45,15 @@
 /* The OP seal is a full-color circular emblem on transparency, so it shows on
    its own (no gradient tile behind it). */
 .brandLogo {
-  width: 46px;
-  height: 46px;
+  width: 55px;
+  height: 55px;
   object-fit: contain;
   display: block;
 }
 
 .brandName {
-  font-size: 18px;
+  /* Matches the Dashboard title size (Topbar .title). */
+  font-size: 22px;
   font-weight: 700;
   color: var(--color-text);
 }
