@@ -9,9 +9,15 @@ interface SidebarProps {
   activeScreen: ScreenId;
   onSelect: (id: ScreenId) => void;
   onClose: () => void;
+  onLogout: () => void;
 }
 
-export function Sidebar({ isOpen, activeScreen, onSelect }: SidebarProps) {
+export function Sidebar({
+  isOpen,
+  activeScreen,
+  onSelect,
+  onLogout,
+}: SidebarProps) {
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
       <div className={styles.brand}>
@@ -50,7 +56,7 @@ export function Sidebar({ isOpen, activeScreen, onSelect }: SidebarProps) {
         </div>
       </nav>
 
-      <button className={styles.logout} type="button">
+      <button className={styles.logout} type="button" onClick={onLogout}>
         <LogOut size={18} />
         <span>Log Out</span>
       </button>
