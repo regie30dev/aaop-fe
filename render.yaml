@@ -1,0 +1,27 @@
+# Render Blueprint for the AAOP front-end.
+#
+# This deploys the built Vite SPA as a STATIC SITE (served from a CDN) — the
+# correct way to host a React/Vite app. Do NOT run `npm run dev` in production;
+# that starts the dev server bound to localhost, which Render can't reach (the
+# cause of the "No open ports detected on 0.0.0.0" deploy failure).
+#
+# IMPORTANT: VITE_API_URL is read at BUILD time and inlined into the bundle, so
+# it must be set here (or in the dashboard), not just in the local .env.local.
+services:
+  - type: web
+    name: aaop-fe
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://aaop-be.onrender.com/api/v1
+    # SPA fallback so deep links / refreshes resolve to index.html.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
