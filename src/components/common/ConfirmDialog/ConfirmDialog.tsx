@@ -1,5 +1,5 @@
 import { AlertTriangle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import { useAnimatedClose } from "../../../hooks/useAnimatedClose";
@@ -16,6 +16,10 @@ interface ConfirmDialogProps {
   confirmLabel?: string;
   pendingLabel?: string;
   cancelLabel?: string;
+  /** "danger" (red, default) for destructive actions, "primary" (blue) otherwise. */
+  confirmVariant?: "danger" | "primary";
+  /** Focus the confirm button on open so Enter triggers it. */
+  autoFocusConfirm?: boolean;
   onConfirm: () => void | Promise<void>;
   onClose: () => void;
 }
@@ -26,6 +30,8 @@ export function ConfirmDialog({
   confirmLabel = "Delete",
   pendingLabel = "Deleting…",
   cancelLabel = "Cancel",
+  confirmVariant = "danger",
+  autoFocusConfirm = false,
   onConfirm,
   onClose,
 }: ConfirmDialogProps) {
@@ -34,14 +40,16 @@ export function ConfirmDialog({
   });
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    if (autoFocusConfirm) confirmRef.current?.focus();
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, []);
+  }, [autoFocusConfirm]);
 
   const handleConfirm = async () => {
     if (pending) return;
@@ -88,8 +96,11 @@ export function ConfirmDialog({
             {cancelLabel}
           </button>
           <button
+            ref={confirmRef}
             type="button"
-            className={styles.confirm}
+            className={`${styles.confirm} ${
+              confirmVariant === "primary" ? styles.confirmPrimary : ""
+            }`}
             onClick={handleConfirm}
             disabled={pending}
           >

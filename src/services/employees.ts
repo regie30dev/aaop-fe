@@ -99,6 +99,8 @@ export interface EmployeeFormValues {
   email: string;
   /** Current hosted photo URL, so the edit form can preview it. */
   imageUrl: string;
+  /** "true"/"false" for the OP Employee checkbox (FormModal values are strings). */
+  isActive: string;
 }
 
 // Build the mutable field payload, sending optionals only when present
@@ -114,6 +116,7 @@ function toMutablePayload(input: NewEmployee): Record<string, unknown> {
   if (input.dateOfBirth) payload.dateOfBirth = input.dateOfBirth;
   if (input.email) payload.email = input.email;
   if (input.imageUrl) payload.imageUrl = input.imageUrl;
+  if (input.isActive !== undefined) payload.isActive = input.isActive;
   return payload;
 }
 
@@ -140,6 +143,7 @@ export async function getEmployee(id: string): Promise<EmployeeFormValues> {
     officeNo: e.officeNo ?? "",
     email: e.email ?? "",
     imageUrl: e.imageUrl ?? "",
+    isActive: e.isActive ? "true" : "false",
   };
 }
 
@@ -156,4 +160,30 @@ export async function updateEmployee(
 export async function deleteEmployee(id: string): Promise<void> {
   await api.del(`/employees/${id}`);
   emitEmployeesChanged();
+}
+
+/**
+ * AI natural-language search. Sends the prompt to the backend, which asks Claude
+ * to filter the employee directory, and returns the ids of matching employees.
+ */
+export async function searchEmployees(
+  prompt: string,
+  records: DirectoryEmployee[],
+): Promise<string[]> {
+  // Send the records exactly as presented in the list (drop UI-only fields like
+  // avatar/colors) so the AI reasons over the on-screen data — the source of truth.
+  const context = records.map((r) => ({
+    id: r.id,
+    employeeNo: r.employeeNo,
+    name: r.name,
+    email: r.email,
+    office: r.department,
+    position: r.role,
+    status: r.status,
+  }));
+  const res = await api.post<ItemEnvelope<{ matchingIds: string[] }>>(
+    "/employees/search",
+    { prompt, records: context },
+  );
+  return res.data.matchingIds;
 }

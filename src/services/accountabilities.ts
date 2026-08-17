@@ -1,4 +1,4 @@
-import { api } from "../api/client";
+import { api, BASE_URL } from "../api/client";
 import type { ItemEnvelope, ListEnvelope } from "../api/client";
 import { emitAccountabilitiesChanged } from "./accountabilityEvents";
 import type {
@@ -40,6 +40,8 @@ interface ApiAccountability {
   employee?: ApiEmployeeRef | null;
   propertyNo: string;
   property?: ApiPropertyRef | null;
+  qty: number;
+  unit?: string | null;
   status: AccountabilityStatus;
   dateIssued: string;
   dateReturned?: string | null;
@@ -53,6 +55,10 @@ export interface AccountabilityFormValues {
   propertyNo: string;
   /** Read-only context: the accountable employee's number. */
   employeeNo: string;
+  /** Quantity (kept as a string for the number input). */
+  qty: string;
+  /** Unit of measure for the quantity. */
+  unit: string;
   /** Date the item was issued, as "YYYY-MM-DD" for the date input. */
   dateIssued: string;
   status: AccountabilityStatus;
@@ -98,6 +104,8 @@ function toDirectoryAccountability(a: ApiAccountability): DirectoryAccountabilit
     propertyNo: a.propertyNo,
     propertyImage: a.property?.imageUrl ?? "",
     property: propertyLabel(a.property),
+    qty: a.qty ?? 1,
+    unit: a.unit ?? "",
     issuedTo: employeeName(a.employee),
     office: a.employee?.office?.officeName ?? "—",
     dateIssued: formatDate(a.dateIssued),
@@ -133,6 +141,8 @@ export async function getAccountability(
     accountabilityNo: a.accountabilityNo,
     propertyNo: a.propertyNo,
     employeeNo: a.employeeNo,
+    qty: a.qty == null ? "" : String(a.qty),
+    unit: a.unit ?? "",
     dateIssued: toDateInput(a.dateIssued),
     status: a.status,
     dateReturned: toDateInput(a.dateReturned),
@@ -147,6 +157,8 @@ export async function createAccountability(
     employeeNo: input.employeeNo,
     propertyNo: input.propertyNo,
   };
+  if (input.qty != null) payload.qty = input.qty;
+  if (input.unit) payload.unit = input.unit;
   if (input.status) payload.status = input.status;
   if (input.dateIssued) payload.dateIssued = input.dateIssued;
   if (input.remarks) payload.remarks = input.remarks;
@@ -161,6 +173,8 @@ export async function updateAccountability(
   const payload: Record<string, unknown> = {};
   if (input.propertyNo) payload.propertyNo = input.propertyNo;
   if (input.employeeNo) payload.employeeNo = input.employeeNo;
+  if (input.qty != null) payload.qty = input.qty;
+  if (input.unit !== undefined) payload.unit = input.unit;
   if (input.dateIssued) payload.dateIssued = input.dateIssued;
   if (input.status) payload.status = input.status;
   // null is meaningful here (clears the return date), so guard on undefined.
@@ -173,4 +187,69 @@ export async function updateAccountability(
 export async function deleteAccountability(id: string): Promise<void> {
   await api.del(`/accountabilities/${id}`);
   emitAccountabilitiesChanged();
+}
+
+/**
+ * AI natural-language search. Sends the prompt AND the records exactly as
+ * presented in the Accountability List so Claude reasons over that data and
+ * context — the on-screen list is the source of truth, filtered or not. Returns
+ * the ids of the matching accountabilities.
+ */
+export async function searchAccountabilities(
+  prompt: string,
+  records: DirectoryAccountability[],
+): Promise<string[]> {
+  // Mirror the columns the user sees (drop the image blob) as search context.
+  const context = records.map((r) => ({
+    id: r.id,
+    accountabilityNo: r.accountabilityNo,
+    qty: r.qty,
+    unit: r.unit,
+    propertyNo: r.propertyNo,
+    nameAndDescription: r.property,
+    issuedTo: r.issuedTo,
+    office: r.office,
+    status: r.status,
+    dateIssued: r.dateIssued,
+    dateReturned: r.dateReturned,
+    remarks: r.remarks,
+  }));
+  const res = await api.post<ItemEnvelope<{ matchingIds: string[] }>>(
+    "/accountabilities/search",
+    { prompt, records: context },
+  );
+  return res.data.matchingIds;
+}
+
+/**
+ * Request the .xlsx report (built server-side with embedded photos) for the
+ * given accountability ids and trigger its download in the browser.
+ */
+export async function downloadAccountabilityReport(
+  ids: string[],
+): Promise<void> {
+  const res = await fetch(`${BASE_URL}/accountabilities/report`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+  if (!res.ok) {
+    let message = `Report failed (${res.status})`;
+    try {
+      const body = await res.json();
+      if (body?.message) message = body.message;
+    } catch {
+      /* response wasn't JSON */
+    }
+    throw new Error(message);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Accountability-List.xlsx";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }

@@ -2,6 +2,8 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+  /* Fill the overlay body so the pager can be pinned to the bottom. */
+  min-height: 100%;
 }
 
 .pageTitle {
@@ -52,6 +54,11 @@
   color: #98a2b3;
 }
 
+.searchInput:disabled {
+  cursor: not-allowed;
+  color: #98a2b3;
+}
+
 .addNew {
   display: inline-flex;
   align-items: center;
@@ -71,6 +78,42 @@
   border-color: var(--color-primary-strong);
 }
 
+.addNew:disabled,
+.reports:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.addNew:disabled:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.reports:disabled:hover {
+  background: #fff;
+}
+
+/* Secondary action — outlined so it reads below the primary "Create" button. */
+.reports {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-primary);
+  background: #fff;
+  border: 1px solid var(--color-primary);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.reports:hover {
+  background: var(--color-primary-soft);
+}
+
 .actionBanner {
   margin: 0 0 12px;
   padding: 10px 14px;
@@ -81,8 +124,51 @@
   font-size: 13px;
 }
 
+/* Round clear (X) button inside the search pill. */
+.searchClear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: #f2f4f7;
+  color: #667085;
+  cursor: pointer;
+}
+
+.searchClear:hover {
+  background: #e4e7ec;
+  color: #101828;
+}
+
+/* Muted note under the toolbar (fallback used / no matches). */
+.searchNote {
+  margin: -6px 0 0;
+  font-size: 13px;
+  color: #667085;
+}
+
+/* "Finding records…" loading state — centered, blue, and slightly enlarged. */
+.searchingNote {
+  text-align: center;
+  color: #2e90fa;
+  font-size: 15px;
+}
+
 .tableWrap {
   overflow-x: auto;
+}
+
+/* While an AI search is running, dim the table and block interaction with it. */
+.tableWrapSearching {
+  opacity: 0.5;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity 0.15s ease;
 }
 
 .table {
@@ -110,8 +196,8 @@
   color: #98a2b3;
 }
 
-.actionsHead {
-  text-align: right;
+.table thead th.actionsHead {
+  text-align: center;
 }
 
 .table tbody td {
@@ -120,10 +206,95 @@
   color: #101828;
   border-bottom: 1px solid #f2f4f7;
   white-space: nowrap;
+  /* Top-align every cell so a tall (wrapped description) row keeps all columns
+     lined up on the first line instead of vertically centered. */
+  vertical-align: top;
+}
+
+/* Uniform 68px row height — kept identical across all directory tables so the
+   pager lands at the same position on every screen. */
+.table tbody tr {
+  height: 68px;
 }
 
 .table tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* Empty rows that pad a short page up to 8, so the pager stays put. */
+.fillerRow {
+  height: 68px;
+}
+
+.fillerRow td {
+  border-bottom: none;
+}
+
+/* Pagination footer — pinned to the bottom of the overlay (margin-top:auto
+   takes up the slack when the table doesn't fill the height). */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.pageInfo {
+  font-size: 13px;
+  color: var(--color-primary);
+}
+
+.pageEllipsis {
+  padding: 0 4px;
+  color: #98a2b3;
+  font-size: 14px;
+  user-select: none;
+}
+
+.pageNav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pageBtn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.pageBtn:hover:not(:disabled):not(.pageBtnActive) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.pageBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pageBtnActive {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  cursor: default;
+}
+
+.rowNo {
+  width: 44px;
+  font-weight: 600;
+  color: #475467;
 }
 
 .accountabilityNo {
@@ -131,9 +302,12 @@
   color: #475467;
 }
 
-.propertyNo {
+/* High-specificity selector so the blue beats the base `.table tbody td` color
+   (which is (0,1,2) and would otherwise win over a bare `.propertyNo`). */
+.table tbody td.propertyNo {
   font-weight: 600;
-  color: #1e40af;
+  /* Vivid primary blue so the identifier reads as a lively, tappable code. */
+  color: #2563eb;
 }
 
 .thumb {
@@ -162,10 +336,24 @@
   color: #101828;
 }
 
-.property {
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.table tbody td.property {
+  width: 440px;
+  max-width: 440px;
+  vertical-align: top;
+}
+
+/* Wrap the name/description, but cap it at ~3 lines and scroll vertically
+   beyond that. white-space is set here (not on the td) so it beats the
+   inherited `nowrap`; the inner block is what actually clips + scrolls. */
+.descriptionText {
+  max-height: 5.6em; /* ~4 lines at line-height 1.4 */
+  overflow-y: auto;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  /* Calm slate — neutral with a cool tint, easy to read alongside the blue. */
+  color: #334155;
+  font-weight: 500;
 }
 
 .remarks {
@@ -210,13 +398,20 @@
   color: #c11574;
 }
 
+/* Center the edit/delete icons in the Actions column. Centering is done on the
+   cell (high-specificity td:last-child) with an inline-flex group, so it wins
+   over the base `.table tbody td` rule regardless of column width. */
+.table tbody td:last-child {
+  text-align: center;
+}
+
 .actions {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 8px;
 }
 
+.actionView,
 .actionEdit,
 .actionDelete {
   display: grid;
@@ -226,18 +421,33 @@
   border-radius: 8px;
   border: 1px solid var(--color-border);
   background: #fff;
-  color: #667085;
   transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
+/* Colorized by action: view = amber, edit = green, delete = red. */
+.actionView {
+  color: #a16207;
+}
+
+.actionEdit {
+  color: #16a34a;
+}
+
+.actionDelete {
+  color: #dc2626;
+}
+
+.actionView:hover {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
 .actionEdit:hover {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-  background: var(--color-primary-soft);
+  border-color: #bbf7d0;
+  background: #f0fdf4;
 }
 
 .actionDelete:hover {
-  color: #f04438;
   border-color: #fecdca;
   background: #fef3f2;
 }

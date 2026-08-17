@@ -29,6 +29,11 @@
   animation: formPop 0.44s cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
 
+/* Opt-in wider variant (e.g. a modal with a two-column multi-select). */
+.cardWide {
+  width: 780px;
+}
+
 /* Read-only "No." field paired with the photo on one row (ID-card header),
    so the upload square doesn't add its own tall block to the modal height. */
 .topRow {
@@ -94,6 +99,34 @@
 .req {
   margin-left: 2px;
   color: #e5484d;
+}
+
+/* Checkbox toggle(s) under the generated field, right-aligned to the end of
+   that field's box (not out under the photo). */
+.checkboxGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+
+.checkboxField {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
 }
 
 .input {
@@ -236,6 +269,27 @@ select.input {
 
 .cancel:hover:not(:disabled) {
   background: #cf3b40;
+}
+
+/* Secondary submit (e.g. "Create ×N") — outlined so the primary Save stands out. */
+.extra {
+  min-width: 130px;
+  padding: 11px 20px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: #fff;
+  border: 1px solid var(--color-primary);
+}
+
+.extra:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+}
+
+.extra:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @keyframes formFadeIn {

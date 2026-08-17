@@ -126,6 +126,24 @@ export async function getProperty(id: string): Promise<PropertyFormValues> {
   };
 }
 
+/**
+ * Create `count` copies of a property (same details, sequential Prop Nos).
+ * Fetches the current directory first so the numbers continue from the highest
+ * stored one, then advances the sequence locally for each copy in the batch.
+ */
+export async function createPropertyBatch(
+  input: Omit<NewProperty, "propertyNo">,
+  count: number,
+): Promise<void> {
+  const existing = await getProperties();
+  const usedNos = existing.map((p) => p.propertyNo);
+  for (let i = 0; i < count; i += 1) {
+    const propertyNo = nextSequentialNo(usedNos, { prefix: "PRP-", width: 5 });
+    await createProperty({ ...input, propertyNo });
+    usedNos.push(propertyNo);
+  }
+}
+
 export async function createProperty(input: NewProperty): Promise<void> {
   await api.post("/properties", {
     propertyNo: input.propertyNo,
@@ -145,4 +163,31 @@ export async function updateProperty(
 export async function deleteProperty(id: string): Promise<void> {
   await api.del(`/properties/${id}`);
   emitPropertiesChanged();
+}
+
+/**
+ * AI natural-language search. Sends the prompt to the backend, which asks Claude
+ * to filter the property directory, and returns the ids of matching properties.
+ */
+export async function searchProperties(
+  prompt: string,
+  records: DirectoryProperty[],
+): Promise<string[]> {
+  // Send the records exactly as presented in the list (drop the image blob) so
+  // the AI reasons over the on-screen data — the list is the source of truth.
+  const context = records.map((r) => ({
+    id: r.id,
+    propertyNo: r.propertyNo,
+    category: r.category,
+    propertyName: r.propertyName,
+    description: r.description,
+    price: r.price,
+    dateAcquired: r.dateAcquired,
+    condition: r.condition,
+  }));
+  const res = await api.post<ItemEnvelope<{ matchingIds: string[] }>>(
+    "/properties/search",
+    { prompt, records: context },
+  );
+  return res.data.matchingIds;
 }

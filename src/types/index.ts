@@ -123,6 +123,10 @@ export interface DirectoryAccountability {
   propertyImage: string;
   /** "PROPERTY NAME, description" — name upper-cased, per spec. */
   property: string;
+  /** Quantity of the item covered by this accountability. */
+  qty: number;
+  /** Unit of measure for the quantity (e.g. "pcs", "set"), or "" when unset. */
+  unit: string;
   /** Full name of the employee the item is issued to. */
   issuedTo: string;
   /** Name of that employee's office. */
@@ -139,6 +143,8 @@ export interface DirectoryAccountability {
 export interface NewAccountability {
   employeeNo: string;
   propertyNo: string;
+  qty: number;
+  unit: string;
   status?: AccountabilityStatus;
   dateIssued?: string;
   remarks?: string;
@@ -148,6 +154,8 @@ export interface NewAccountability {
 export interface EditAccountability {
   propertyNo?: string;
   employeeNo?: string;
+  qty?: number;
+  unit?: string;
   dateIssued?: string;
   status?: AccountabilityStatus;
   /** A date to record a return, or null to clear it. */
@@ -167,4 +175,6 @@ export interface NewEmployee {
   email?: string;
   /** Hosted image URL (from the upload endpoint), stored on the employee. */
   imageUrl?: string;
+  /** Whether the person is an active OP employee. */
+  isActive?: boolean;
 }

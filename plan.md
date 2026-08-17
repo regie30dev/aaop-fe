@@ -41,4 +41,7 @@ Then, the Actions (column).  So, these are the  titles (labels): (corresponding 
 		 - Date Issued -> dateIssued
 		 - Date Returned -> dateReturned
 		 - Status -> status
-		 - Remarks -> remarks 
+		 - Remarks -> remarks
+	
+	6. Create: Reports - once the Reports button is clicked under Accountability then it shall produce a report based on all column data. For example the Accountability search output yielded all records of a certain 'Joseph Ivan Stalin' -> then that would be the data to be displayed in a certain format.
+	The format is located at /uidesign/forms/AAOPForms.xlsx. So the report would be inside a 'modal' but with a much wider and taller 'screen' form. Just do the necessary adjustments to effect such output. 

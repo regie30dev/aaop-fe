@@ -105,6 +105,17 @@
   border-color: #b42318;
 }
 
+/* Non-destructive (blue) confirm, e.g. "Yes, create another". */
+.confirmPrimary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.confirmPrimary:hover:not(:disabled) {
+  background: var(--color-primary-strong);
+  border-color: var(--color-primary-strong);
+}
+
 .cancel:disabled,
 .confirm:disabled {
   opacity: 0.6;

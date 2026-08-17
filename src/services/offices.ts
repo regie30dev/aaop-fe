@@ -89,3 +89,28 @@ export async function deleteOffice(id: string): Promise<void> {
   await api.del(`/offices/${id}`);
   emitOfficesChanged();
 }
+
+/**
+ * AI natural-language search. Sends the prompt to the backend, which asks Claude
+ * to filter the office directory, and returns the ids of matching offices.
+ */
+export async function searchOffices(
+  prompt: string,
+  records: DirectoryOffice[],
+): Promise<string[]> {
+  // Send the records exactly as presented in the list so the AI reasons over
+  // the on-screen data — the list is the source of truth.
+  const context = records.map((r) => ({
+    id: r.id,
+    officeNo: r.officeNo,
+    officeName: r.officeName,
+    function: r.function,
+    location: r.location,
+    status: r.status,
+  }));
+  const res = await api.post<ItemEnvelope<{ matchingIds: string[] }>>(
+    "/offices/search",
+    { prompt, records: context },
+  );
+  return res.data.matchingIds;
+}

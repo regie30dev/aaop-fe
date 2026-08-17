@@ -26,4 +26,6 @@ dist-ssr
 # Claude Code local settings
 .claude/
 
+uidesign/
+
 audits/

@@ -18,7 +18,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  width: 1521px;
+  width: 1825px; /* 1521px + 20% */
   height: 900px;
   max-width: calc(100vw - 48px);
   max-height: calc(100vh - 48px);

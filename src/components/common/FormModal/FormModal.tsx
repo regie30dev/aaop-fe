@@ -19,7 +19,8 @@ export type FieldType =
   | "date"
   | "file"
   | "select"
-  | "textarea";
+  | "textarea"
+  | "checkbox";
 
 export interface ModalField {
   name: string;
@@ -27,10 +28,12 @@ export interface ModalField {
   type?: FieldType;
   required?: boolean;
   placeholder?: string;
-  /** Options for a `select` field. */
-  options?: { value: string; label: string }[];
+  /** Options for a `select` field. `image` shows a thumbnail for the selection. */
+  options?: { value: string; label: string; image?: string }[];
   /** For a `select` field: show a filter box to search long option lists. */
   searchable?: boolean;
+  /** For a `select` field: allow choosing multiple options (comma-joined value). */
+  multiple?: boolean;
   /** Placeholder artwork for a `file` field (defaults to the person icon). */
   image?: string;
   /** Render read-only (e.g. contextual info that the BE won't accept changes to). */
@@ -51,6 +54,10 @@ interface FormModalProps {
   initial?: Record<string, string>;
   submitLabel: string;
   pendingLabel?: string;
+  /** Widen the modal (e.g. to fit a two-column multi-select). */
+  size?: "default" | "wide";
+  /** Read-only view: every field is disabled and only a "Close" button shows. */
+  readOnly?: boolean;
   onClose: () => void;
   onSubmit: (values: Record<string, string>) => void | Promise<void>;
   /**
@@ -59,6 +66,16 @@ interface FormModalProps {
    * field's string value (e.g. values.picture = "https://…").
    */
   uploadFile?: (file: File) => Promise<string>;
+  /**
+   * Optional secondary submit button (e.g. "Create ×N"). It validates and
+   * collects the same values as the primary submit, then calls `onSubmit`.
+   * `countField` names a numeric field whose live value feeds `label(count)`.
+   */
+  extraAction?: {
+    countField?: string;
+    label: (count: number) => string;
+    onSubmit: (values: Record<string, string>) => void | Promise<void>;
+  };
 }
 
 function Label({
@@ -87,9 +104,11 @@ function Label({
 function PhotoField({
   field,
   initialUrl,
+  readOnly,
 }: {
   field: ModalField;
   initialUrl?: string;
+  readOnly?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -115,7 +134,8 @@ function PhotoField({
       <button
         type="button"
         className={styles.photoButton}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => !readOnly && inputRef.current?.click()}
+        disabled={readOnly}
         aria-label={field.label}
         title={field.label}
       >
@@ -150,9 +170,12 @@ export function FormModal({
   initial,
   submitLabel,
   pendingLabel = "Saving…",
+  size = "default",
+  readOnly = false,
   onClose,
   onSubmit,
   uploadFile,
+  extraAction,
 }: FormModalProps) {
   // Dismiss only via the explicit X (no outside-click, no Escape).
   const { closing, close: handleClose } = useAnimatedClose(
@@ -164,11 +187,24 @@ export function FormModal({
   const formRef = useRef<HTMLFormElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Live value of the extra action's count field, for its button label.
+  const [extraCount, setExtraCount] = useState(() => {
+    const raw = extraAction?.countField
+      ? initial?.[extraAction.countField]
+      : undefined;
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  });
 
   // File fields (e.g. Upload Picture) are pinned to the modal's upper-right
   // corner; everything else flows down the form in order.
   const fileFields = fields.filter((field) => field.type === "file");
-  const flowFields = fields.filter((field) => field.type !== "file");
+  // Checkboxes render next to the generated field (top of the form); everything
+  // else that isn't a file flows down in order.
+  const checkboxFields = fields.filter((field) => field.type === "checkbox");
+  const flowFields = fields.filter(
+    (field) => field.type !== "file" && field.type !== "checkbox",
+  );
 
   // Lock background scroll and focus the first editable field.
   useEffect(() => {
@@ -203,34 +239,72 @@ export function FormModal({
     }
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (submitting) return;
-    const data = new FormData(event.currentTarget);
+  // Collect the non-file field values from the form.
+  const buildValues = (data: FormData): Record<string, string> => {
     const values: Record<string, string> = {};
     if (generated) values[generated.name] = generated.value;
     for (const field of fields) {
       if (field.type === "file") continue; // handled separately below
+      if (field.type === "checkbox") {
+        // Unchecked boxes are absent from FormData; normalize to "true"/"false".
+        values[field.name] = data.get(field.name) != null ? "true" : "false";
+        continue;
+      }
       values[field.name] = String(data.get(field.name) ?? "");
     }
+    return values;
+  };
+
+  // Upload any picked file(s), writing each returned URL onto its field value.
+  const applyUploads = async (data: FormData, values: Record<string, string>) => {
+    if (!uploadFile) return;
+    for (const field of fileFields) {
+      const picked = data.get(field.name);
+      if (picked instanceof File && picked.size > 0) {
+        values[field.name] = await uploadFile(picked);
+      }
+    }
+  };
+
+  // Shared submit runner: collect values, upload files, hand off, then close.
+  const runSubmit = async (
+    handler: (values: Record<string, string>) => void | Promise<void>,
+  ) => {
+    if (submitting || !formRef.current) return;
+    const data = new FormData(formRef.current);
+    const values = buildValues(data);
     setError(null);
     setSubmitting(true);
     try {
-      // Upload any picked file(s) first; pass each resulting URL as the field value.
-      if (uploadFile) {
-        for (const field of fileFields) {
-          const picked = data.get(field.name);
-          if (picked instanceof File && picked.size > 0) {
-            values[field.name] = await uploadFile(picked);
-          }
-        }
-      }
-      await onSubmit(values);
+      await applyUploads(data, values);
+      await handler(values);
       handleClose();
     } catch (err) {
       setError(getErrorMessage(err, "Something went wrong."));
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void runSubmit(onSubmit);
+  };
+
+  // Secondary action (e.g. "Create ×N"): validate the native form first, then
+  // run the same collect/upload path against the extra handler.
+  const runExtra = () => {
+    if (!extraAction || !formRef.current) return;
+    if (!formRef.current.reportValidity()) return;
+    void runSubmit(extraAction.onSubmit);
+  };
+
+  // Keep the extra button's count label in sync with its field as it's typed.
+  const handleFormInput = (event: FormEvent<HTMLFormElement>) => {
+    if (!extraAction?.countField) return;
+    const target = event.target as HTMLInputElement;
+    if (target?.name !== extraAction.countField) return;
+    const n = Number(target.value);
+    setExtraCount(Number.isFinite(n) && n > 0 ? n : 1);
   };
 
   const titleId = "form-modal-title";
@@ -249,16 +323,39 @@ export function FormModal({
     </div>
   ) : null;
 
+  const checkboxGroup =
+    checkboxFields.length > 0 ? (
+      <div className={styles.checkboxGroup}>
+        {checkboxFields.map((field) => (
+          <label key={field.name} className={styles.checkboxField}>
+            <input
+              id={field.name}
+              name={field.name}
+              className={styles.checkbox}
+              type="checkbox"
+              value="true"
+              defaultChecked={initial?.[field.name] === "true"}
+              disabled={field.disabled || readOnly}
+            />
+            <span>{field.label}</span>
+          </label>
+        ))}
+      </div>
+    ) : null;
+
   return createPortal(
     <div className={`${styles.backdrop} ${closing ? styles.backdropClosing : ""}`}>
       <form
         ref={formRef}
-        className={`${styles.card} ${closing ? styles.cardClosing : ""}`}
+        className={`${styles.card} ${size === "wide" ? styles.cardWide : ""} ${
+          closing ? styles.cardClosing : ""
+        }`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         onSubmit={handleSubmit}
         onKeyDown={handleKeyDown}
+        onInput={handleFormInput}
       >
         <button
           type="button"
@@ -275,19 +372,26 @@ export function FormModal({
 
         {fileFields.length > 0 ? (
           <div className={styles.topRow}>
-            <div className={styles.topRowMain}>{generatedField}</div>
+            <div className={styles.topRowMain}>
+              {generatedField}
+              {checkboxGroup}
+            </div>
             <div className={styles.fileCorner}>
               {fileFields.map((field) => (
                 <PhotoField
                   key={field.name}
                   field={field}
                   initialUrl={initial?.[field.name]}
+                  readOnly={readOnly}
                 />
               ))}
             </div>
           </div>
         ) : (
-          generatedField
+          <>
+            {generatedField}
+            {checkboxGroup}
+          </>
         )}
 
         {flowFields.map((field) => (
@@ -303,8 +407,9 @@ export function FormModal({
                 defaultValue={initial?.[field.name] ?? ""}
                 placeholder={field.placeholder}
                 required={field.required}
-                disabled={field.disabled}
+                disabled={field.disabled || readOnly}
                 searchable={field.searchable}
+                multiple={field.multiple}
               />
             ) : field.type === "textarea" ? (
               <textarea
@@ -315,7 +420,7 @@ export function FormModal({
                 placeholder={field.placeholder}
                 defaultValue={initial?.[field.name] ?? ""}
                 required={field.required}
-                disabled={field.disabled}
+                disabled={field.disabled || readOnly}
               />
             ) : (
               <input
@@ -327,7 +432,7 @@ export function FormModal({
                 placeholder={field.placeholder}
                 defaultValue={initial?.[field.name] ?? ""}
                 required={field.required}
-                disabled={field.disabled}
+                disabled={field.disabled || readOnly}
               />
             )}
           </div>
@@ -342,12 +447,24 @@ export function FormModal({
             onClick={handleClose}
             disabled={submitting}
           >
-            Cancel
+            {readOnly ? "Close" : "Cancel"}
           </button>
-          <button type="submit" className={styles.submit} disabled={submitting}>
-            {submitting && <Spinner />}
-            {submitting ? pendingLabel : submitLabel}
-          </button>
+          {!readOnly && extraAction && (
+            <button
+              type="button"
+              className={styles.extra}
+              onClick={runExtra}
+              disabled={submitting}
+            >
+              {extraAction.label(extraCount)}
+            </button>
+          )}
+          {!readOnly && (
+            <button type="submit" className={styles.submit} disabled={submitting}>
+              {submitting && <Spinner />}
+              {submitting ? pendingLabel : submitLabel}
+            </button>
+          )}
         </div>
       </form>
     </div>,

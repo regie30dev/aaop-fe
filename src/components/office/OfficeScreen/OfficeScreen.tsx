@@ -1,10 +1,12 @@
 import {
   CheckCircle2,
   ChevronsUpDown,
+  Eye,
   Pencil,
   Plus,
   Search,
   Trash2,
+  X,
   XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -16,14 +18,31 @@ import {
   getNextOfficeNo,
   getOffice,
   getOffices,
+  searchOffices,
   updateOffice,
 } from "../../../services/offices";
 import type { OfficeFormValues } from "../../../services/offices";
 import { FormModal } from "../../common/FormModal/FormModal";
 import type { ModalField } from "../../common/FormModal/FormModal";
 import { ConfirmDialog } from "../../common/ConfirmDialog/ConfirmDialog";
+import { Spinner } from "../../common/Spinner/Spinner";
 import { getErrorMessage } from "../../../utils/errors";
 import styles from "./OfficeScreen.module.css";
+
+/** Plain keyword filter used as a fallback when the AI search is unavailable. */
+function localMatchIds(items: DirectoryOffice[], query: string): Set<string> {
+  const q = query.trim().toLowerCase();
+  return new Set(
+    items
+      .filter((row) =>
+        [row.officeNo, row.officeName, row.function, row.location, row.status]
+          .join(" ")
+          .toLowerCase()
+          .includes(q),
+      )
+      .map((row) => row.id),
+  );
+}
 
 const columns = [
   "Office No",
@@ -62,6 +81,8 @@ const statusIcon: Record<OfficeStatus, ComponentType<{ size?: number }>> = {
   Inactive: XCircle,
 };
 
+const PAGE_SIZE = 8; // rows shown per page
+
 export function OfficeScreen() {
   const [offices, setOffices] = useState<DirectoryOffice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,12 +91,23 @@ export function OfficeScreen() {
   const [form, setForm] = useState<
     | { mode: "add" }
     | { mode: "edit"; id: string; values: OfficeFormValues }
+    | { mode: "view"; id: string; values: OfficeFormValues }
     | null
   >(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<DirectoryOffice | null>(
     null,
   );
+
+  // AI natural-language search. `matchIds` null = no active filter (show all);
+  // a Set = only rows whose id is in it. `note` explains a fallback/empty result.
+  const [query, setQuery] = useState("");
+  const [matchIds, setMatchIds] = useState<Set<string> | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchNote, setSearchNote] = useState<string | null>(null);
+
+  // Client-side pagination over the currently-shown rows.
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -93,11 +125,26 @@ export function OfficeScreen() {
     load();
   }, [load]);
 
+  // Reset to the first page whenever the active search filter changes.
+  useEffect(() => {
+    setPage(1);
+  }, [matchIds]);
+
   const openEdit = async (row: DirectoryOffice) => {
     setActionError(null);
     try {
       const values = await getOffice(row.id);
       setForm({ mode: "edit", id: row.id, values });
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Failed to open the office."));
+    }
+  };
+
+  const openView = async (row: DirectoryOffice) => {
+    setActionError(null);
+    try {
+      const values = await getOffice(row.id);
+      setForm({ mode: "view", id: row.id, values });
     } catch (err) {
       setActionError(getErrorMessage(err, "Failed to open the office."));
     }
@@ -110,6 +157,7 @@ export function OfficeScreen() {
   };
 
   const handleSubmit = async (values: Record<string, string>) => {
+    if (form?.mode === "view") return; // read-only: nothing to save
     const payload: NewOffice = {
       officeNo: values.officeNo,
       officeName: values.officeName,
@@ -124,32 +172,107 @@ export function OfficeScreen() {
     await load();
   };
 
+  const runSearch = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const q = query.trim();
+    if (!q) {
+      setMatchIds(null);
+      setSearchNote(null);
+      return;
+    }
+    setSearching(true);
+    setSearchNote(null);
+    // Search within the records currently on screen (the result of any prior
+    // search) so successive queries refine the same visible set. Clearing the
+    // search resets the corpus back to all loaded records.
+    const corpus =
+      matchIds === null ? offices : offices.filter((row) => matchIds.has(row.id));
+    try {
+      const ids = await searchOffices(q, corpus);
+      setMatchIds(new Set(ids));
+      if (ids.length === 0) setSearchNote("No offices match your search.");
+    } catch {
+      // AI unavailable → fall back to a plain keyword filter so search still works.
+      setMatchIds(localMatchIds(corpus, q));
+      setSearchNote("AI search unavailable — showing keyword matches.");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setQuery("");
+    setMatchIds(null);
+    setSearchNote(null);
+  };
+
+  // Rows to display: everything, or only those the active search matched.
+  const visibleOffices =
+    matchIds === null ? offices : offices.filter((row) => matchIds.has(row.id));
+
+  // Paginate the visible rows. `currentPage` is clamped so deletions/searches
+  // that shrink the list can't leave us stranded past the last page.
+  const totalPages = Math.max(1, Math.ceil(visibleOffices.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  // Condensed pager: first page, an ellipsis, then the last page (once there's
+  // more than one page).
+  const pagerItems: (number | "gap")[] =
+    totalPages <= 1 ? [1] : [1, "gap", totalPages];
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const pageOffices = visibleOffices.slice(pageStart, pageStart + PAGE_SIZE);
+
   return (
     <div className={styles.screen}>
       <h2 className={styles.pageTitle}>Office List</h2>
 
       <div className={styles.toolbar}>
-        <div className={styles.search}>
+        <form className={styles.search} onSubmit={runSearch}>
           <Search size={16} className={styles.searchIcon} />
           <input
             className={styles.searchInput}
             type="text"
-            placeholder="Search"
+            placeholder="Search — try “active offices handling procurement in Manila”     PRESS ENTER"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            disabled={loading}
           />
-        </div>
+          {searching && <Spinner />}
+          {!searching && matchIds !== null && (
+            <button
+              type="button"
+              className={styles.searchClear}
+              onClick={clearSearch}
+              aria-label="Clear search"
+              title="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </form>
         <button
           className={styles.addNew}
           type="button"
           onClick={() => setForm({ mode: "add" })}
+          disabled={loading || searching}
         >
           <Plus size={16} />
           Add New Office
         </button>
       </div>
 
+      {(searching || searchNote) && (
+        <p
+          className={`${styles.searchNote} ${searching ? styles.searchingNote : ""}`}
+        >
+          {searching ? "Finding records…" : searchNote}
+        </p>
+      )}
       {actionError && <p className={styles.actionBanner}>{actionError}</p>}
 
-      <div className={styles.tableWrap}>
+      <div
+        className={`${styles.tableWrap} ${searching ? styles.tableWrapSearching : ""}`}
+        aria-busy={searching}
+      >
         <table className={styles.table}>
           <thead>
             <tr>
@@ -182,16 +305,18 @@ export function OfficeScreen() {
                 </td>
               </tr>
             )}
-            {!loading && !error && offices.length === 0 && (
+            {!loading && !error && visibleOffices.length === 0 && (
               <tr>
                 <td className={styles.stateCell} colSpan={columns.length + 1}>
-                  No offices yet. Add the first one.
+                  {matchIds !== null
+                    ? "No offices match your search."
+                    : "No offices yet. Add the first one."}
                 </td>
               </tr>
             )}
             {!loading &&
               !error &&
-              offices.map((row) => {
+              pageOffices.map((row) => {
                 const StatusIcon = statusIcon[row.status];
                 return (
                   <tr key={row.id}>
@@ -209,6 +334,15 @@ export function OfficeScreen() {
                     </td>
                     <td>
                       <div className={styles.actions}>
+                        <button
+                          type="button"
+                          className={styles.actionView}
+                          aria-label={`View ${row.officeName}`}
+                          title="View"
+                          onClick={() => openView(row)}
+                        >
+                          <Eye size={16} />
+                        </button>
                         <button
                           type="button"
                           className={styles.actionEdit}
@@ -232,29 +366,98 @@ export function OfficeScreen() {
                   </tr>
                 );
               })}
+            {/* Pad the last page to 8 rows so the pager stays at the bottom. */}
+            {!loading &&
+              !error &&
+              visibleOffices.length > 0 &&
+              Array.from({ length: PAGE_SIZE - pageOffices.length }).map(
+                (_, i) => (
+                  <tr
+                    key={`filler-${i}`}
+                    className={styles.fillerRow}
+                    aria-hidden="true"
+                  >
+                    <td colSpan={columns.length + 1}>&nbsp;</td>
+                  </tr>
+                ),
+              )}
           </tbody>
         </table>
       </div>
 
+      {!loading && !error && visibleOffices.length > 0 && (
+        <div className={styles.pagination}>
+          <span className={styles.pageInfo}>
+            Showing {pageStart + 1}–
+            {Math.min(pageStart + PAGE_SIZE, visibleOffices.length)} of{" "}
+            {visibleOffices.length}
+          </span>
+          <div className={styles.pageNav}>
+            <button
+              type="button"
+              className={styles.pageBtn}
+              onClick={() => setPage(currentPage - 1)}
+              disabled={searching || currentPage === 1}
+            >
+              Prev
+            </button>
+            {pagerItems.map((item, idx) =>
+              item === "gap" ? (
+                <span key={`gap-${idx}`} className={styles.pageEllipsis}>
+                  …
+                </span>
+              ) : (
+                <button
+                  key={item}
+                  type="button"
+                  className={`${styles.pageBtn} ${
+                    item === currentPage ? styles.pageBtnActive : ""
+                  }`}
+                  onClick={() => setPage(item)}
+                  disabled={searching}
+                >
+                  {item}
+                </button>
+              ),
+            )}
+            <button
+              type="button"
+              className={styles.pageBtn}
+              onClick={() => setPage(currentPage + 1)}
+              disabled={searching || currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
       {form && (
         <FormModal
-          key={form.mode === "edit" ? form.id : "add"}
-          title={form.mode === "edit" ? "Edit Office" : "Add New Office"}
+          key={form.mode === "add" ? "add" : form.id}
+          title={
+            form.mode === "view"
+              ? "View Office"
+              : form.mode === "edit"
+                ? "Edit Office"
+                : "Add New Office"
+          }
           generated={{
             name: "officeNo",
             label: "Office No.",
             value:
-              form.mode === "edit"
-                ? form.values.officeNo
-                : getNextOfficeNo(offices),
+              form.mode === "add"
+                ? getNextOfficeNo(offices)
+                : form.values.officeNo,
           }}
           fields={OFFICE_FIELDS}
           initial={
-            form.mode === "edit"
+            form.mode !== "add"
               ? (form.values as unknown as Record<string, string>)
               : undefined
           }
           submitLabel={form.mode === "edit" ? "Update" : "Save"}
+          readOnly={form.mode === "view"}
           onClose={() => setForm(null)}
           onSubmit={handleSubmit}
         />
