@@ -36,13 +36,19 @@
 }
 
 .brandMark {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--color-primary), #60a5fa);
-  color: #fff;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
+}
+
+/* The OP seal is a full-color circular emblem on transparency, so it shows on
+   its own (no gradient tile behind it). */
+.brandLogo {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  display: block;
 }
 
 .brandName {

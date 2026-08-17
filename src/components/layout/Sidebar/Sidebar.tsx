@@ -1,6 +1,7 @@
-import { LogOut, Users } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { SCREENS, SCREEN_ORDER } from "../../../navigation/screens";
 import type { ScreenId } from "../../../navigation/screens";
+import opLogo from "../../../assets/op-logo.png";
 import styles from "./Sidebar.module.css";
 
 interface SidebarProps {
@@ -15,7 +16,11 @@ export function Sidebar({ isOpen, activeScreen, onSelect }: SidebarProps) {
     <aside className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
       <div className={styles.brand}>
         <span className={styles.brandMark}>
-          <Users size={18} />
+          <img
+            className={styles.brandLogo}
+            src={opLogo}
+            alt="Office of the President"
+          />
         </span>
         <span className={styles.brandName}>OP Assets</span>
       </div>
